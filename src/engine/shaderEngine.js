@@ -25,7 +25,6 @@ const THERMAL_FRAG = `
   uniform float u_time;
 
   vec3 inferno(float t) {
-    // Inferno colormap approximation
     vec3 c0 = vec3(0.0, 0.0, 0.02);
     vec3 c1 = vec3(0.42, 0.05, 0.53);
     vec3 c2 = vec3(0.89, 0.32, 0.15);
@@ -41,17 +40,13 @@ const THERMAL_FRAG = `
   void main() {
     vec4 pixel = texture2D(u_image, v_texCoord);
     float lum = dot(pixel.rgb, vec3(0.299, 0.587, 0.114));
-
-    // Apply intensity curve
     lum = pow(lum, 1.0 / (u_intensity * 1.5 + 0.5));
 
-    // Animated heat shimmer
     float shimmer = sin(v_texCoord.y * 80.0 + u_time * 3.0) * 0.02 * u_intensity;
     lum = clamp(lum + shimmer, 0.0, 1.0);
 
     vec3 thermal = inferno(lum);
 
-    // Edge glow accent
     float edge = abs(dFdx(lum)) + abs(dFdy(lum));
     thermal += vec3(0.4, 0.8, 1.0) * edge * 8.0 * u_intensity;
 
@@ -75,7 +70,6 @@ const EDGE_FRAG = `
   void main() {
     vec2 texel = 1.0 / u_resolution;
 
-    // Sobel kernel
     float tl = luminance(texture2D(u_image, v_texCoord + vec2(-texel.x, -texel.y)).rgb);
     float t  = luminance(texture2D(u_image, v_texCoord + vec2( 0.0,     -texel.y)).rgb);
     float tr = luminance(texture2D(u_image, v_texCoord + vec2( texel.x, -texel.y)).rgb);
@@ -89,64 +83,17 @@ const EDGE_FRAG = `
     float gy = tl + 2.0*t + tr - bl - 2.0*b - br;
     float edge = sqrt(gx*gx + gy*gy);
 
-    // Neon color cycling
     float hue = u_time * 0.2 + v_texCoord.x * 0.5;
-    vec3 neon1 = vec3(0.0, 1.0, 1.0);   // cyan
-    vec3 neon2 = vec3(1.0, 0.0, 0.8);   // magenta
+    vec3 neon1 = vec3(0.0, 1.0, 1.0);
+    vec3 neon2 = vec3(1.0, 0.0, 0.8);
     vec3 color = mix(neon1, neon2, sin(hue) * 0.5 + 0.5);
 
     float strength = edge * u_intensity * 4.0;
     vec3 result = color * strength;
-
-    // Subtle background
     vec3 bg = texture2D(u_image, v_texCoord).rgb * 0.08;
     result += bg;
 
     gl_FragColor = vec4(result, 1.0);
-  }
-`
-
-// ── GRAVITATIONAL PRISM / REFRACTION ───────────────────────────────
-const LENS_FRAG = `
-  precision mediump float;
-  varying vec2 v_texCoord;
-  uniform sampler2D u_image;
-  uniform float u_intensity;
-  uniform float u_time;
-  uniform vec2 u_resolution;
-
-  void main() {
-    vec2 uv = v_texCoord;
-    vec2 center = vec2(0.5);
-    vec2 offset = uv - center;
-    float dist = length(offset);
-
-    // Barrel distortion (gravitational lens)
-    float power = u_intensity * 2.0;
-    float distortion = 1.0 + power * dist * dist;
-    vec2 warped = center + offset / distortion;
-
-    // Animated ripple
-    float ripple = sin(dist * 30.0 - u_time * 4.0) * 0.005 * u_intensity;
-    warped += normalize(offset + 0.001) * ripple;
-
-    // Chromatic aberration
-    float aberration = u_intensity * 0.008;
-    vec2 dir = normalize(offset + 0.001);
-    float r = texture2D(u_image, warped + dir * aberration).r;
-    float g = texture2D(u_image, warped).g;
-    float b = texture2D(u_image, warped - dir * aberration).b;
-
-    // Iridescent rainbow ring at boundary
-    float ring = smoothstep(0.3, 0.35, dist) * smoothstep(0.5, 0.45, dist);
-    vec3 rainbow = vec3(
-      sin(dist * 20.0 + u_time) * 0.5 + 0.5,
-      sin(dist * 20.0 + u_time + 2.094) * 0.5 + 0.5,
-      sin(dist * 20.0 + u_time + 4.189) * 0.5 + 0.5
-    );
-
-    vec3 color = vec3(r, g, b) + rainbow * ring * u_intensity * 0.5;
-    gl_FragColor = vec4(color, 1.0);
   }
 `
 
@@ -164,16 +111,13 @@ const PIXELATE_FRAG = `
   }
 
   void main() {
-    // Pixelation
     float pixelSize = mix(1.0, 20.0, u_intensity);
     vec2 pixelated = floor(v_texCoord * u_resolution / pixelSize) * pixelSize / u_resolution;
 
-    // Glitch offset
     float glitchLine = step(0.98, rand(vec2(floor(v_texCoord.y * 30.0), floor(u_time * 10.0))));
     float glitchAmount = glitchLine * 0.05 * u_intensity;
     pixelated.x += glitchAmount * (rand(vec2(u_time)) * 2.0 - 1.0);
 
-    // Chromatic aberration
     float ca = u_intensity * 0.01 * (1.0 + glitchLine * 5.0);
     float r = texture2D(u_image, pixelated + vec2(ca, 0.0)).r;
     float g = texture2D(u_image, pixelated).g;
@@ -181,12 +125,98 @@ const PIXELATE_FRAG = `
 
     vec3 color = vec3(r, g, b);
 
-    // Random color blocks on glitch lines
     if (glitchLine > 0.5) {
       color = mix(color, vec3(rand(pixelated + u_time), 0.0, rand(pixelated.yx + u_time)), 0.3 * u_intensity);
     }
 
     gl_FragColor = vec4(color, 1.0);
+  }
+`
+
+// ── FISH EYE (Strong barrel distortion) ────────────────────────────
+const FISHEYE_FRAG = `
+  precision mediump float;
+  varying vec2 v_texCoord;
+  uniform sampler2D u_image;
+  uniform float u_intensity;
+  uniform float u_time;
+  uniform vec2 u_resolution;
+
+  void main() {
+    vec2 uv = v_texCoord;
+    vec2 center = vec2(0.5);
+    vec2 offset = uv - center;
+    float r = length(offset);
+
+    // Strong center-weighted radial barrel distortion
+    float power = u_intensity * 4.0 + 0.5;
+    vec2 distorted = center + offset * (1.0 + power * r * r);
+
+    // Clamp to valid texture range
+    distorted = clamp(distorted, 0.0, 1.0);
+
+    // Slight chromatic aberration for depth
+    float ca = u_intensity * 0.004 * r;
+    vec2 dir = normalize(offset + 0.0001);
+    float rv = texture2D(u_image, distorted + dir * ca).r;
+    float gv = texture2D(u_image, distorted).g;
+    float bv = texture2D(u_image, distorted - dir * ca).b;
+
+    // Vignette darkening at edges
+    float vignette = 1.0 - smoothstep(0.3, 0.7, r) * 0.3 * u_intensity;
+
+    gl_FragColor = vec4(vec3(rv, gv, bv) * vignette, 1.0);
+  }
+`
+
+// ── RAINBOW DISCO KALEIDOSCOPE ─────────────────────────────────────
+const KALEIDOSCOPE_FRAG = `
+  precision mediump float;
+  varying vec2 v_texCoord;
+  uniform sampler2D u_image;
+  uniform float u_intensity;
+  uniform float u_time;
+  uniform vec2 u_resolution;
+
+  vec3 hsv2rgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+  }
+
+  void main() {
+    vec2 uv = v_texCoord - 0.5;
+    float angle = atan(uv.y, uv.x);
+    float radius = length(uv);
+
+    // Multi-axis kaleidoscope symmetry (8-way)
+    float segments = mix(4.0, 8.0, u_intensity);
+    float segAngle = 3.14159265 * 2.0 / segments;
+    angle = mod(angle + u_time * 0.3, segAngle);
+    // Mirror alternating segments
+    if (angle > segAngle * 0.5) {
+      angle = segAngle - angle;
+    }
+
+    // Reconstruct UV from polar coordinates
+    vec2 kalUV = vec2(cos(angle), sin(angle)) * radius + 0.5;
+    kalUV = clamp(kalUV, 0.0, 1.0);
+
+    vec3 texColor = texture2D(u_image, kalUV).rgb;
+
+    // HSV hue-shift modulation for disco effect
+    float hueShift = mod(u_time * 0.5, 1.0);
+    float lumBase = dot(texColor, vec3(0.299, 0.587, 0.114));
+    vec3 rainbow = hsv2rgb(vec3(hueShift + radius * 2.0 + angle * 0.3, 0.7 * u_intensity, 1.0));
+
+    // Blend original texture with rainbow overlay
+    vec3 result = mix(texColor, texColor * rainbow * 1.8, u_intensity * 0.6);
+
+    // Add mandala glow ring
+    float ring = smoothstep(0.01, 0.02, abs(mod(radius * 10.0 - u_time * 2.0, 1.0) - 0.5));
+    result += rainbow * (1.0 - ring) * 0.15 * u_intensity;
+
+    gl_FragColor = vec4(result, 1.0);
   }
 `
 
@@ -251,8 +281,9 @@ export class ShaderEngine {
     const shaderSources = {
       thermal: THERMAL_FRAG,
       edge: EDGE_FRAG,
-      lens: LENS_FRAG,
       pixelate: PIXELATE_FRAG,
+      fisheye: FISHEYE_FRAG,
+      kaleidoscope: KALEIDOSCOPE_FRAG,
     }
 
     for (const [name, frag] of Object.entries(shaderSources)) {
@@ -300,7 +331,7 @@ export class ShaderEngine {
 
   /**
    * Render a shader effect on the given source (video or canvas).
-   * @param {string} shaderName — 'thermal' | 'edge' | 'lens' | 'pixelate'
+   * @param {string} shaderName
    * @param {HTMLVideoElement|HTMLCanvasElement} source
    * @param {number} intensity — 0..1
    * @param {number} time — elapsed time in seconds

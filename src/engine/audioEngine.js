@@ -85,6 +85,16 @@ export function getFrequencyData() {
 }
 
 /**
+ * Get raw time-domain waveform data for vibrating string rendering.
+ * Returns a Uint8Array where 128 = silence, 0/255 = max amplitude.
+ */
+export function getTimeDomainData() {
+  if (!analyser || !dataArray) return new Uint8Array(0)
+  analyser.getByteTimeDomainData(dataArray)
+  return dataArray
+}
+
+/**
  * Check if a beat (bass spike) was detected.
  */
 let lastBassAvg = 0

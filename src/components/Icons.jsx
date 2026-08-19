@@ -198,3 +198,46 @@ export function IconSettings({ size = 20, className = '' }) {
     </svg>
   )
 }
+
+export function IconHeart({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  )
+}
+
+export function IconFish({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="6"/>
+      <circle cx="12" cy="12" r="2"/>
+    </svg>
+  )
+}
+
+export function IconCat({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 22c4.97 0 9-2.69 9-6v-2c0-2-1.5-3.5-3-4l1-6-4.5 3h-5L5 1l1 6c-1.5.5-3 2-3 4v2c0 3.31 4.03 6 9 6z"/>
+      <path d="M10 16h.01M14 16h.01"/>
+    </svg>
+  )
+}
+
+export function IconRainbow({ size = 20, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M22 17a10 10 0 0 0-20 0"/>
+      <path d="M6 17a6 6 0 0 1 12 0"/>
+      <path d="M10 17a2 2 0 0 1 4 0"/>
+    </svg>
+  )
+}
+
+

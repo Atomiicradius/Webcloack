@@ -6,12 +6,15 @@ import { motion } from 'framer-motion'
 import { IconHexagon, IconActivity } from './Icons.jsx'
 
 const FilterNames = {
-  cloak:    'INVISIBILITY CLOAK',
-  lens:     'GRAVITATIONAL LENS',
-  thermal:  'THERMAL VISION',
-  edge:     'EDGE SYNTH',
-  matrix:   'MATRIX RAIN',
-  pixelate: 'PIXEL GLITCH',
+  cloak:        'INVISIBILITY CLOAK',
+  matrix:       'MATRIX RAIN',
+  thermal:      'THERMAL VISION',
+  edge:         'EDGE SYNTH',
+  pixelate:     'PIXEL GLITCH',
+  hearts:       'HEART CROWN',
+  fisheye:      'FISH EYE',
+  catwhiskers:  'CAT WHISKERS',
+  kaleidoscope: 'KALEIDOSCOPE',
 }
 
 export default function HUDHeader({

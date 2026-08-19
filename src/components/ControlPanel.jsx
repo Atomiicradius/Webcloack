@@ -1,52 +1,40 @@
 /**
  * ControlPanel.jsx — Glassmorphic floating control panel with filter gallery,
- * sliders, toggles, and capture controls.
+ * sliders, toggles, and capture controls. Supports 9 filter modes.
  */
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  IconEye, IconEyeOff, IconCamera, IconImage, IconVideo, IconVideoOff,
+  IconEyeOff, IconCamera, IconImage, IconVideo, IconVideoOff,
   IconMic, IconGrid, IconSliders, IconChevronLeft, IconChevronRight,
-  IconZap, IconDownload, IconSettings,
+  IconZap, IconDownload, IconSettings, IconHeart, IconFish, IconCat,
+  IconRainbow, IconActivity,
 } from './Icons.jsx'
 import { FILTERS } from '../engine/renderPipeline.js'
 
 const FILTER_ICONS = {
-  cloak:    IconEyeOff,
-  lens:     IconZap,
-  matrix:   IconGrid,
-  thermal:  IconActivity,
-  edge:     IconZap,
-  pixelate: IconGrid,
-}
-
-// Fallback activity icon
-function IconActivity(props) {
-  return (
-    <svg width={props.size || 20} height={props.size || 20} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-    </svg>
-  )
+  cloak:        IconEyeOff,
+  matrix:       IconGrid,
+  thermal:      IconActivity,
+  edge:         IconZap,
+  pixelate:     IconGrid,
+  hearts:       IconHeart,
+  fisheye:      IconFish,
+  catwhiskers:  IconCat,
+  kaleidoscope: IconRainbow,
 }
 
 const FILTER_DESCRIPTIONS = {
-  cloak:    'Blend captured background into the ROI',
-  lens:     'Barrel distortion with chromatic aberration',
-  matrix:   'Digital rain reflecting video luminosity',
-  thermal:  'Infrared heatmap with edge glow accents',
-  edge:     'Neon Sobel edges with color cycling',
-  pixelate: 'Resolution downsampling with glitch artifacts',
-}
-
-const FILTER_SHORTCUTS = {
-  cloak:    '1',
-  lens:     '2',
-  matrix:   '3',
-  thermal:  '4',
-  edge:     '5',
-  pixelate: '6',
+  cloak:        'Blend captured background into the ROI',
+  matrix:       'Digital rain reflecting video luminosity',
+  thermal:      'Infrared heatmap with edge glow accents',
+  edge:         'Neon Sobel edges with color cycling',
+  pixelate:     'Resolution downsampling with glitch artifacts',
+  hearts:       'Animated heart crown arch with sparkles',
+  fisheye:      'Strong barrel distortion bulging center',
+  catwhiskers:  'Neon cat ears and whisker overlay',
+  kaleidoscope: 'Rainbow disco mandala with hue cycling',
 }
 
 export default function ControlPanel({
@@ -99,10 +87,11 @@ export default function ControlPanel({
                 <IconSliders size={14} />
                 FILTER ENGINE
               </h3>
-              <div className="filter-grid">
-                {FILTERS.map((f) => {
+              <div className="filter-grid filter-grid-3col">
+                {FILTERS.map((f, idx) => {
                   const Icon = FILTER_ICONS[f.id] || IconZap
                   const isActive = activeFilter === f.id
+                  const shortcut = String(idx + 1)
                   return (
                     <motion.button
                       key={f.id}
@@ -118,7 +107,7 @@ export default function ControlPanel({
                         <Icon size={18} />
                       </div>
                       <span className="filter-card-label">{f.label}</span>
-                      <span className="filter-card-shortcut">{FILTER_SHORTCUTS[f.id]}</span>
+                      <span className="filter-card-shortcut">{shortcut}</span>
                       {isActive && (
                         <motion.div
                           className="filter-active-indicator"
@@ -247,7 +236,7 @@ export default function ControlPanel({
             {/* ── Keyboard shortcuts reference ──────────────────── */}
             <div className="panel-section panel-shortcuts">
               <p className="shortcut-hint">
-                Keys: 1-6 filters / B capture / S screenshot / R record / W wireframe / A audio / P pinch-snap
+                Keys: 1-9 filters / B capture / S screenshot / R record / W wireframe / A audio
               </p>
             </div>
           </motion.div>
