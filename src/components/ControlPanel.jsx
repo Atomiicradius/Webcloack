@@ -19,8 +19,6 @@ const FILTER_ICONS = {
   thermal:      IconActivity,
   edge:         IconZap,
   pixelate:     IconGrid,
-  hearts:       IconHeart,
-  fisheye:      IconFish,
   catwhiskers:  IconCat,
   kaleidoscope: IconRainbow,
 }
@@ -31,8 +29,6 @@ const FILTER_DESCRIPTIONS = {
   thermal:      'Infrared heatmap with edge glow accents',
   edge:         'Neon Sobel edges with color cycling',
   pixelate:     'Resolution downsampling with glitch artifacts',
-  hearts:       'Animated heart crown arch with sparkles',
-  fisheye:      'Strong barrel distortion bulging center',
   catwhiskers:  'Neon cat ears and whisker overlay',
   kaleidoscope: 'Rainbow disco mandala with hue cycling',
 }
@@ -236,7 +232,7 @@ export default function ControlPanel({
             {/* ── Keyboard shortcuts reference ──────────────────── */}
             <div className="panel-section panel-shortcuts">
               <p className="shortcut-hint">
-                Keys: 1-9 filters / B capture / S screenshot / R record / W wireframe / A audio
+                Keys: 1-7 filters / B capture / S screenshot / R record / W wireframe / A audio
               </p>
             </div>
           </motion.div>

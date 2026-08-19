@@ -10,15 +10,13 @@ import { MatrixRain } from './matrixAscii.js'
 import { ParticleSystem } from './particleSystem.js'
 import { getTimeDomainData } from './audioEngine.js'
 
-// ── Available filter modes (9 total) ────────────────────────────────
+// ── Available filter modes (7 total) ────────────────────────────────
 export const FILTERS = [
   { id: 'cloak',        label: 'INVISIBILITY',   shaderKey: null },
   { id: 'matrix',       label: 'MATRIX RAIN',    shaderKey: null },
   { id: 'thermal',      label: 'THERMAL',        shaderKey: 'thermal' },
   { id: 'edge',         label: 'EDGE SYNTH',     shaderKey: 'edge' },
   { id: 'pixelate',     label: 'PIXEL GLITCH',   shaderKey: 'pixelate' },
-  { id: 'hearts',       label: 'HEART CROWN',    shaderKey: null },
-  { id: 'fisheye',      label: 'FISH EYE',       shaderKey: 'fisheye' },
   { id: 'catwhiskers',  label: 'CAT WHISKERS',   shaderKey: null },
   { id: 'kaleidoscope', label: 'KALEIDOSCOPE',   shaderKey: 'kaleidoscope' },
 ]
@@ -78,8 +76,8 @@ export function renderFrame(ctx, video, quads, config) {
 
     const sorted = sortQuadClockwise(quad)
 
-    // For overlay-only filters (hearts, cat whiskers), skip clipping
-    const isOverlayFilter = filter === 'hearts' || filter === 'catwhiskers'
+    // For overlay-only filters (cat whiskers), skip clipping
+    const isOverlayFilter = filter === 'catwhiskers'
 
     if (!isOverlayFilter) {
       // ── 2a. Feathered edge + polygon clip ───────────────────────
@@ -144,8 +142,6 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
     }
     matrixRain.render(matrixCtx, video, width, height, intensity)
     ctx.drawImage(matrixCanvas, 0, 0)
-  } else if (filter === 'hearts') {
-    renderHeartCrown(ctx, quad, intensity, time)
   } else if (filter === 'catwhiskers') {
     renderCatWhiskers(ctx, quad, intensity, time)
   } else {
@@ -158,109 +154,7 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// HEART CROWN FILTER
-// ═══════════════════════════════════════════════════════════════════
 
-const heartParticles = []
-
-function renderHeartCrown(ctx, quad, intensity, time) {
-  if (quad.length < 4) return
-
-  // Find the top two points (smallest Y values = top of frame)
-  const byY = [...quad].sort((a, b) => a[1] - b[1])
-  const topLeft = byY[0]
-  const topRight = byY[1]
-
-  // Arch center and span
-  const cx = (topLeft[0] + topRight[0]) / 2
-  const cy = (topLeft[1] + topRight[1]) / 2
-  const span = dist2D(topLeft, topRight)
-  const archHeight = span * 0.4
-
-  // Compute arch tilt angle
-  const tiltAngle = Math.atan2(topRight[1] - topLeft[1], topRight[0] - topLeft[0])
-
-  ctx.save()
-  ctx.translate(cx, cy)
-  ctx.rotate(tiltAngle)
-
-  // Draw arch of hearts
-  const heartCount = 8 + Math.floor(intensity * 6)
-  for (let i = 0; i < heartCount; i++) {
-    const t = i / (heartCount - 1)
-    const angle = Math.PI * t
-    const hx = (t - 0.5) * span
-    const hy = -Math.sin(angle) * archHeight
-
-    // Pulsing animation
-    const pulse = 0.8 + Math.sin(time * 3 + i * 0.7) * 0.3
-    const size = (8 + intensity * 8) * pulse
-
-    // Alternating pink/magenta
-    const hue = i % 2 === 0 ? '#ff2d75' : '#ff75c3'
-
-    drawHeart(ctx, hx, hy, size, hue, pulse * intensity)
-  }
-
-  // Emit sparkle particles floating upward
-  if (Math.random() < 0.3 * intensity) {
-    const t = Math.random()
-    const angle = Math.PI * t
-    const px = (t - 0.5) * span
-    const py = -Math.sin(angle) * archHeight
-    heartParticles.push({
-      x: px, y: py,
-      vx: (Math.random() - 0.5) * 1,
-      vy: -1 - Math.random() * 2,
-      life: 1.0,
-      size: 2 + Math.random() * 3,
-      hue: Math.random() > 0.5 ? '#ff2d75' : '#ff75c3',
-    })
-  }
-
-  // Update and draw sparkle particles
-  for (let i = heartParticles.length - 1; i >= 0; i--) {
-    const p = heartParticles[i]
-    p.x += p.vx
-    p.y += p.vy
-    p.life -= 0.02
-    if (p.life <= 0) {
-      heartParticles.splice(i, 1)
-      continue
-    }
-    ctx.globalAlpha = p.life * 0.8
-    ctx.shadowColor = p.hue
-    ctx.shadowBlur = 8
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2)
-    ctx.fillStyle = p.hue
-    ctx.fill()
-  }
-  // Cap particles
-  while (heartParticles.length > 80) heartParticles.shift()
-
-  ctx.restore()
-}
-
-function drawHeart(ctx, x, y, size, color, alpha) {
-  ctx.save()
-  ctx.globalAlpha = Math.min(alpha, 1)
-  ctx.translate(x, y)
-  ctx.fillStyle = color
-  ctx.shadowColor = color
-  ctx.shadowBlur = 12
-
-  const s = size / 15
-  ctx.beginPath()
-  ctx.moveTo(0 * s, -3 * s)
-  ctx.bezierCurveTo(-5 * s, -10 * s, -14 * s, -4 * s, 0 * s, 8 * s)
-  ctx.bezierCurveTo(14 * s, -4 * s, 5 * s, -10 * s, 0 * s, -3 * s)
-  ctx.closePath()
-  ctx.fill()
-
-  ctx.restore()
-}
 
 // ═══════════════════════════════════════════════════════════════════
 // CAT WHISKERS + EARS FILTER

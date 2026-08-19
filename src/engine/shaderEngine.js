@@ -282,7 +282,6 @@ export class ShaderEngine {
       thermal: THERMAL_FRAG,
       edge: EDGE_FRAG,
       pixelate: PIXELATE_FRAG,
-      fisheye: FISHEYE_FRAG,
       kaleidoscope: KALEIDOSCOPE_FRAG,
     }
 

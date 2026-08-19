@@ -11,8 +11,6 @@ const FilterNames = {
   thermal:      'THERMAL VISION',
   edge:         'EDGE SYNTH',
   pixelate:     'PIXEL GLITCH',
-  hearts:       'HEART CROWN',
-  fisheye:      'FISH EYE',
   catwhiskers:  'CAT WHISKERS',
   kaleidoscope: 'KALEIDOSCOPE',
 }

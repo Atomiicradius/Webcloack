@@ -65,7 +65,7 @@ export default function App() {
   // ── Toast helper ───────────────────────────────────────────────
   const showToast = useCallback((message, type = 'info') => {
     const id = ++toastIdRef.current
-    setToasts((prev) => [...prev.slice(-2), { id, message, type }])
+    setToasts([{ id, message, type }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 2500)
@@ -127,7 +127,6 @@ export default function App() {
           setActiveFilter((prev) => {
             const idx = FILTERS.findIndex((f) => f.id === prev)
             const next = (idx + 1) % FILTERS.length
-            showToast(`${FILTERS[next].label} MODE`, 'info')
             return FILTERS[next].id
           })
         }
@@ -136,7 +135,7 @@ export default function App() {
     }
     rafId = requestAnimationFrame(gestureLoop)
     return () => cancelAnimationFrame(rafId)
-  }, [isTrackingReady, getPinchData, processGestures, showToast])
+  }, [isTrackingReady, getPinchData, processGestures])
 
   // ── Capture background ─────────────────────────────────────────
   const captureBackground = useCallback(() => {
@@ -233,7 +232,7 @@ export default function App() {
       if (e.target.tagName === 'INPUT') return
 
       switch (e.key) {
-        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+        case '1': case '2': case '3': case '4': case '5': case '6': case '7': {
           const idx = parseInt(e.key) - 1
           if (FILTERS[idx]) {
             setActiveFilter(FILTERS[idx].id)
