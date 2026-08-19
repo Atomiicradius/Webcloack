@@ -1,0 +1,113 @@
+/**
+ * audioEngine.js — Web Audio API AnalyserNode for real-time mic frequency analysis.
+ * Provides bass/mid/treble energy bands and overall amplitude for HUD modulation.
+ */
+
+let audioCtx = null
+let analyser = null
+let micStream = null
+let dataArray = null
+let freqArray = null
+let bufferLength = 0
+
+/**
+ * Initialize microphone input and create audio analysis pipeline.
+ */
+export async function initAudio() {
+  if (audioCtx) return true
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 1024
+    analyser.smoothingTimeConstant = 0.8
+    bufferLength = analyser.frequencyBinCount
+    dataArray = new Uint8Array(bufferLength)
+    freqArray = new Uint8Array(bufferLength)
+
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const source = audioCtx.createMediaStreamSource(micStream)
+    source.connect(analyser)
+    return true
+  } catch (e) {
+    console.warn('Audio init failed:', e)
+    return false
+  }
+}
+
+/**
+ * Get frequency data split into bass/mid/treble energy bands + overall amplitude.
+ * Returns { bass, mid, treble, amplitude } normalized 0..1
+ */
+export function getAudioLevels() {
+  if (!analyser || !dataArray) {
+    return { bass: 0, mid: 0, treble: 0, amplitude: 0 }
+  }
+
+  analyser.getByteFrequencyData(freqArray)
+  analyser.getByteTimeDomainData(dataArray)
+
+  // Frequency bands (rough mapping for 44.1kHz, fftSize=1024)
+  const binCount = freqArray.length
+  const bassEnd = Math.floor(binCount * 0.1)    // ~0-440 Hz
+  const midEnd = Math.floor(binCount * 0.4)     // ~440-1760 Hz
+
+  let bassSum = 0, midSum = 0, trebleSum = 0
+
+  for (let i = 0; i < binCount; i++) {
+    const val = freqArray[i] / 255
+    if (i < bassEnd) bassSum += val
+    else if (i < midEnd) midSum += val
+    else trebleSum += val
+  }
+
+  const bass = bassEnd > 0 ? bassSum / bassEnd : 0
+  const mid = (midEnd - bassEnd) > 0 ? midSum / (midEnd - bassEnd) : 0
+  const treble = (binCount - midEnd) > 0 ? trebleSum / (binCount - midEnd) : 0
+
+  // Overall amplitude from time domain
+  let ampSum = 0
+  for (let i = 0; i < bufferLength; i++) {
+    const v = (dataArray[i] - 128) / 128
+    ampSum += v * v
+  }
+  const amplitude = Math.sqrt(ampSum / bufferLength)
+
+  return { bass, mid, treble, amplitude }
+}
+
+/**
+ * Get raw frequency data for visualization.
+ */
+export function getFrequencyData() {
+  if (!analyser || !freqArray) return new Uint8Array(0)
+  analyser.getByteFrequencyData(freqArray)
+  return freqArray
+}
+
+/**
+ * Check if a beat (bass spike) was detected.
+ */
+let lastBassAvg = 0
+export function detectBeat(threshold = 0.6) {
+  const { bass } = getAudioLevels()
+  const isBeat = bass > threshold && bass > lastBassAvg * 1.4
+  lastBassAvg = lastBassAvg * 0.9 + bass * 0.1
+  return isBeat
+}
+
+/**
+ * Cleanup audio resources.
+ */
+export function destroyAudio() {
+  if (micStream) {
+    micStream.getTracks().forEach((t) => t.stop())
+    micStream = null
+  }
+  if (audioCtx) {
+    audioCtx.close()
+    audioCtx = null
+  }
+  analyser = null
+  dataArray = null
+  freqArray = null
+}
