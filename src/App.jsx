@@ -13,7 +13,8 @@ import { useGestureDetector } from './hooks/useGestureDetector.js'
 import { useFPS } from './hooks/useFPS.js'
 
 // Engine
-import { initPipeline, FILTERS } from './engine/renderPipeline.js'
+import { initPipeline } from './engine/renderPipeline.js'
+import { FILTERS, getFilter } from './engine/filters.js'
 import { initAudio, getAudioLevels, destroyAudio } from './engine/audioEngine.js'
 
 // Components
@@ -232,14 +233,6 @@ export default function App() {
       if (e.target.tagName === 'INPUT') return
 
       switch (e.key) {
-        case '1': case '2': case '3': case '4': case '5': case '6': case '7': {
-          const idx = parseInt(e.key) - 1
-          if (FILTERS[idx]) {
-            setActiveFilter(FILTERS[idx].id)
-            showToast(`${FILTERS[idx].label} MODE`, 'info')
-          }
-          break
-        }
         case 'b':
         case 'B':
           captureBackground()
@@ -260,8 +253,17 @@ export default function App() {
         case 'A':
           toggleAudio()
           break
-        default:
+        default: {
+          // Digit keys 1..N select filters; N comes from the registry (max 9).
+          if (/^[1-9]$/.test(e.key)) {
+            const filter = FILTERS[parseInt(e.key, 10) - 1]
+            if (filter) {
+              setActiveFilter(filter.id)
+              showToast(`${filter.label} MODE`, 'info')
+            }
+          }
           break
+        }
       }
     }
 
@@ -345,7 +347,7 @@ export default function App() {
           activeFilter={activeFilter}
           onFilterChange={(f) => {
             setActiveFilter(f)
-            showToast(`${FILTERS.find((x) => x.id === f)?.label} MODE`, 'info')
+            showToast(`${getFilter(f)?.label} MODE`, 'info')
           }}
           intensity={intensity}
           onIntensityChange={setIntensity}

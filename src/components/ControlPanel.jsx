@@ -6,32 +6,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  IconEyeOff, IconCamera, IconImage, IconVideo, IconVideoOff,
+  IconCamera, IconImage, IconVideo, IconVideoOff,
   IconMic, IconGrid, IconSliders, IconChevronLeft, IconChevronRight,
-  IconZap, IconDownload, IconSettings, IconHeart, IconFish, IconCat,
-  IconRainbow, IconActivity,
+  IconZap, IconDownload, IconSettings,
 } from './Icons.jsx'
-import { FILTERS } from '../engine/renderPipeline.js'
-
-const FILTER_ICONS = {
-  cloak:        IconEyeOff,
-  matrix:       IconGrid,
-  thermal:      IconActivity,
-  edge:         IconZap,
-  pixelate:     IconGrid,
-  catwhiskers:  IconCat,
-  kaleidoscope: IconRainbow,
-}
-
-const FILTER_DESCRIPTIONS = {
-  cloak:        'Blend captured background into the ROI',
-  matrix:       'Digital rain reflecting video luminosity',
-  thermal:      'Infrared heatmap with edge glow accents',
-  edge:         'Neon Sobel edges with color cycling',
-  pixelate:     'Resolution downsampling with glitch artifacts',
-  catwhiskers:  'Neon cat ears and whisker overlay',
-  kaleidoscope: 'Rainbow disco mandala with hue cycling',
-}
+import { FILTERS, getFilter } from '../engine/filters.js'
 
 export default function ControlPanel({
   activeFilter,
@@ -85,7 +64,7 @@ export default function ControlPanel({
               </h3>
               <div className="filter-grid filter-grid-3col">
                 {FILTERS.map((f, idx) => {
-                  const Icon = FILTER_ICONS[f.id] || IconZap
+                  const Icon = f.icon || IconZap
                   const isActive = activeFilter === f.id
                   const shortcut = String(idx + 1)
                   return (
@@ -125,7 +104,7 @@ export default function ControlPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                   >
-                    {FILTER_DESCRIPTIONS[hoveredFilter]}
+                    {getFilter(hoveredFilter)?.description}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -232,7 +211,7 @@ export default function ControlPanel({
             {/* ── Keyboard shortcuts reference ──────────────────── */}
             <div className="panel-section panel-shortcuts">
               <p className="shortcut-hint">
-                Keys: 1-7 filters / B capture / S screenshot / R record / W wireframe / A audio
+                Keys: 1-{FILTERS.length} filters / B capture / S screenshot / R record / W wireframe / A audio
               </p>
             </div>
           </motion.div>

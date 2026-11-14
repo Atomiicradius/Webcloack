@@ -4,16 +4,8 @@
 
 import { motion } from 'framer-motion'
 import { IconHexagon, IconActivity } from './Icons.jsx'
+import { getFilter } from '../engine/filters.js'
 
-const FilterNames = {
-  cloak:        'INVISIBILITY CLOAK',
-  matrix:       'MATRIX RAIN',
-  thermal:      'THERMAL VISION',
-  edge:         'EDGE SYNTH',
-  pixelate:     'PIXEL GLITCH',
-  catwhiskers:  'CAT WHISKERS',
-  kaleidoscope: 'KALEIDOSCOPE',
-}
 
 export default function HUDHeader({
   fps = 0,
@@ -43,7 +35,7 @@ export default function HUDHeader({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {FilterNames[activeFilter] || 'UNKNOWN'}
+          {getFilter(activeFilter)?.hudLabel || 'UNKNOWN'}
         </motion.span>
       </div>
 

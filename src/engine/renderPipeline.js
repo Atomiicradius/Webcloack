@@ -9,17 +9,7 @@ import { ShaderEngine } from './shaderEngine.js'
 import { MatrixRain } from './matrixAscii.js'
 import { ParticleSystem } from './particleSystem.js'
 import { getTimeDomainData } from './audioEngine.js'
-
-// ── Available filter modes (7 total) ────────────────────────────────
-export const FILTERS = [
-  { id: 'cloak',        label: 'INVISIBILITY',   shaderKey: null },
-  { id: 'matrix',       label: 'MATRIX RAIN',    shaderKey: null },
-  { id: 'thermal',      label: 'THERMAL',        shaderKey: 'thermal' },
-  { id: 'edge',         label: 'EDGE SYNTH',     shaderKey: 'edge' },
-  { id: 'pixelate',     label: 'PIXEL GLITCH',   shaderKey: 'pixelate' },
-  { id: 'catwhiskers',  label: 'CAT WHISKERS',   shaderKey: null },
-  { id: 'kaleidoscope', label: 'KALEIDOSCOPE',   shaderKey: 'kaleidoscope' },
-]
+import { getFilter } from './filters.js'
 
 // ── Pipeline singleton instances ────────────────────────────────────
 let shaderEngine = null
@@ -146,7 +136,7 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
     renderCatWhiskers(ctx, quad, intensity, time)
   } else {
     // WebGL shader-based filters
-    const filterDef = FILTERS.find((f) => f.id === filter)
+    const filterDef = getFilter(filter)
     if (filterDef && filterDef.shaderKey && shaderEngine) {
       const result = shaderEngine.render(filterDef.shaderKey, video, intensity, time)
       ctx.drawImage(result, 0, 0, width, height)
