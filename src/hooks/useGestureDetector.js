@@ -13,7 +13,7 @@ const SNAP_COOLDOWN = 600        // ms — debounce between snaps
 // RELEASE_THRESHOLD px → 0, FULL_PINCH px → 1 (closer = higher intensity).
 const FULL_PINCH = 20
 
-export function useGestureDetector(filterCount) {
+export function useGestureDetector() {
   const pinchStateRef = useRef({})  // per-hand pinch state
   const lastSnapTimeRef = useRef(0)
 

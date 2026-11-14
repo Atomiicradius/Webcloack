@@ -99,15 +99,6 @@ export function getAudioLevels() {
 }
 
 /**
- * Get raw frequency data for visualization.
- */
-export function getFrequencyData() {
-  if (!analyser || !freqArray) return new Uint8Array(0)
-  analyser.getByteFrequencyData(freqArray)
-  return freqArray
-}
-
-/**
  * Get raw time-domain waveform data for vibrating string rendering.
  * Returns a Uint8Array where 128 = silence, 0/255 = max amplitude.
  */

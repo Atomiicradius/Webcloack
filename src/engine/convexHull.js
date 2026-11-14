@@ -72,20 +72,6 @@ export function centroid(points) {
 }
 
 /**
- * Compute polygon area using the Shoelace formula.
- */
-export function polygonArea(points) {
-  let area = 0
-  const n = points.length
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n
-    area += points[i][0] * points[j][1]
-    area -= points[j][0] * points[i][1]
-  }
-  return Math.abs(area) / 2
-}
-
-/**
  * Euclidean distance between two 2D points.
  */
 export function dist2D(a, b) {

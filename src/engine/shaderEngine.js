@@ -133,42 +133,6 @@ const PIXELATE_FRAG = `
   }
 `
 
-// ── FISH EYE (Strong barrel distortion) ────────────────────────────
-const FISHEYE_FRAG = `
-  precision mediump float;
-  varying vec2 v_texCoord;
-  uniform sampler2D u_image;
-  uniform float u_intensity;
-  uniform float u_time;
-  uniform vec2 u_resolution;
-
-  void main() {
-    vec2 uv = v_texCoord;
-    vec2 center = vec2(0.5);
-    vec2 offset = uv - center;
-    float r = length(offset);
-
-    // Strong center-weighted radial barrel distortion
-    float power = u_intensity * 4.0 + 0.5;
-    vec2 distorted = center + offset * (1.0 + power * r * r);
-
-    // Clamp to valid texture range
-    distorted = clamp(distorted, 0.0, 1.0);
-
-    // Slight chromatic aberration for depth
-    float ca = u_intensity * 0.004 * r;
-    vec2 dir = normalize(offset + 0.0001);
-    float rv = texture2D(u_image, distorted + dir * ca).r;
-    float gv = texture2D(u_image, distorted).g;
-    float bv = texture2D(u_image, distorted - dir * ca).b;
-
-    // Vignette darkening at edges
-    float vignette = 1.0 - smoothstep(0.3, 0.7, r) * 0.3 * u_intensity;
-
-    gl_FragColor = vec4(vec3(rv, gv, bv) * vignette, 1.0);
-  }
-`
-
 // ── RAINBOW DISCO KALEIDOSCOPE ─────────────────────────────────────
 const KALEIDOSCOPE_FRAG = `
   precision mediump float;

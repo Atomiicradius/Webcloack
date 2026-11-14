@@ -78,7 +78,7 @@ export default function CameraApp() {
     getConfidence,
     getHandsCount,
   } = useHandTracking(videoRef, isVideoReady)
-  const { processGestures } = useGestureDetector(FILTERS.length)
+  const { processGestures } = useGestureDetector()
   const fps = useFPS()
 
   // ── Computed ───────────────────────────────────────────────────

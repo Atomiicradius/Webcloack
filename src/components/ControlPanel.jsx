@@ -1,6 +1,6 @@
 /**
  * ControlPanel.jsx — Glassmorphic floating control panel with filter gallery,
- * sliders, toggles, and capture controls. Supports 9 filter modes.
+ * sliders, toggles, and capture controls. Filters come from engine/filters.js.
  */
 
 import { memo, useState } from 'react'

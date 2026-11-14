@@ -15,8 +15,6 @@ const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIA
 export const LANDMARK = {
   THUMB_TIP: 4,
   INDEX_TIP: 8,
-  THUMB_MCP: 2,
-  INDEX_MCP: 5,
 }
 
 let handLandmarker = null
