@@ -15,7 +15,8 @@ import { useFPS } from './hooks/useFPS.js'
 // Engine
 import { initPipeline } from './engine/renderPipeline.js'
 import { FILTERS, getFilter } from './engine/filters.js'
-import { initAudio, getAudioLevels, destroyAudio } from './engine/audioEngine.js'
+import { initAudio, destroyAudio } from './engine/audioEngine.js'
+import { live, ZERO_LEVELS } from './engine/liveState.js'
 
 // Components
 import HUDHeader from './components/HUDHeader.jsx'
@@ -23,6 +24,8 @@ import ControlPanel from './components/ControlPanel.jsx'
 import MagicCanvas from './components/MagicCanvas.jsx'
 import AudioVisualizer from './components/AudioVisualizer.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
+
+const UI_SYNC_INTERVAL_MS = 100
 
 export default function App() {
   // ── State ──────────────────────────────────────────────────────
@@ -33,7 +36,9 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [bgImage, setBgImage] = useState(null)
-  const [audioLevels, setAudioLevels] = useState({ bass: 0, mid: 0, treble: 0, amplitude: 0 })
+  const [audioLevels, setAudioLevels] = useState(ZERO_LEVELS)
+  const [confidence, setConfidence] = useState(0)
+  const [handsCount, setHandsCount] = useState(0)
   const [toasts, setToasts] = useState([])
   const [loadingMessage, setLoadingMessage] = useState('INITIALIZING NEURAL ENGINE...')
 
@@ -41,7 +46,6 @@ export default function App() {
   const canvasRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const recordedChunksRef = useRef([])
-  const audioRafRef = useRef(null)
   const pipelineInitRef = useRef(false)
   const toastIdRef = useRef(0)
 
@@ -60,8 +64,6 @@ export default function App() {
 
   // ── Computed ───────────────────────────────────────────────────
   const isLoading = !isVideoReady || isTrackingLoading
-  const confidence = getConfidence()
-  const handsCount = getHandsCount()
 
   // ── Toast helper ───────────────────────────────────────────────
   const showToast = useCallback((message, type = 'info') => {
@@ -91,24 +93,19 @@ export default function App() {
     }
   }, [isVideoReady, isTrackingLoading])
 
-  // ── Audio processing loop ──────────────────────────────────────
+  // ── Throttled UI sync (~10 Hz) ─────────────────────────────────
+  // Per-frame values (intensity, audio levels, tracking stats) live in refs /
+  // the live-state store. React state is refreshed from them at a low rate,
+  // only for UI that displays them.
   useEffect(() => {
-    if (!audioEnabled) {
-      if (audioRafRef.current) cancelAnimationFrame(audioRafRef.current)
-      return
-    }
-
-    function audioLoop() {
-      const levels = getAudioLevels()
-      setAudioLevels(levels)
-      audioRafRef.current = requestAnimationFrame(audioLoop)
-    }
-    audioRafRef.current = requestAnimationFrame(audioLoop)
-
-    return () => {
-      if (audioRafRef.current) cancelAnimationFrame(audioRafRef.current)
-    }
-  }, [audioEnabled])
+    const id = setInterval(() => {
+      setIntensity(live.intensity)
+      setAudioLevels(live.audioLevels)
+      setConfidence(Math.round(getConfidence() * 100) / 100)
+      setHandsCount(getHandsCount())
+    }, UI_SYNC_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [getConfidence, getHandsCount])
 
   // ── Gesture processing ─────────────────────────────────────────
   useEffect(() => {
@@ -120,8 +117,8 @@ export default function App() {
       if (pinchData.length > 0) {
         const { gestureIntensity, filterSnap } = processGestures(pinchData)
 
-        // Auto-adjust intensity from pinch gesture
-        setIntensity((prev) => prev * 0.8 + gestureIntensity * 0.2)
+        // Auto-adjust intensity from pinch gesture (live store, not React state)
+        live.intensity = live.intensity * 0.8 + gestureIntensity * 0.2
 
         // Cycle filter on pinch-snap
         if (filterSnap) {
@@ -214,7 +211,8 @@ export default function App() {
     if (audioEnabled) {
       destroyAudio()
       setAudioEnabled(false)
-      setAudioLevels({ bass: 0, mid: 0, treble: 0, amplitude: 0 })
+      live.audioLevels = ZERO_LEVELS
+      setAudioLevels(ZERO_LEVELS)
       showToast('AUDIO DISABLED', 'info')
     } else {
       const ok = await initAudio()
@@ -226,6 +224,20 @@ export default function App() {
       }
     }
   }, [audioEnabled, showToast])
+
+  // ── Stable handlers for memoized children ──────────────────────
+  const handleFilterChange = useCallback((f) => {
+    setActiveFilter(f)
+    showToast(`${getFilter(f)?.label} MODE`, 'info')
+  }, [showToast])
+
+  const handleIntensityChange = useCallback((v) => {
+    live.intensity = v
+    setIntensity(v)
+  }, [])
+
+  const handleToggleWireframe = useCallback(() => setShowWireframe((v) => !v), [])
+  const handleToggleCollapse = useCallback(() => setPanelCollapsed((v) => !v), [])
 
   // ── Keyboard shortcuts (defined after callbacks) ───────────────
   useEffect(() => {
@@ -310,12 +322,9 @@ export default function App() {
       <MagicCanvas
         videoRef={videoRef}
         getQuads={getQuads}
-        getPinchData={getPinchData}
         filter={activeFilter}
-        intensity={intensity}
         bgImage={bgImage}
         showWireframe={showWireframe}
-        audioLevels={audioLevels}
         audioEnabled={audioEnabled}
         canvasRef={canvasRef}
       />
@@ -345,14 +354,11 @@ export default function App() {
       {!isLoading && (
         <ControlPanel
           activeFilter={activeFilter}
-          onFilterChange={(f) => {
-            setActiveFilter(f)
-            showToast(`${getFilter(f)?.label} MODE`, 'info')
-          }}
+          onFilterChange={handleFilterChange}
           intensity={intensity}
-          onIntensityChange={setIntensity}
+          onIntensityChange={handleIntensityChange}
           showWireframe={showWireframe}
-          onToggleWireframe={() => setShowWireframe((v) => !v)}
+          onToggleWireframe={handleToggleWireframe}
           audioEnabled={audioEnabled}
           onToggleAudio={toggleAudio}
           onCaptureBackground={captureBackground}
@@ -361,7 +367,7 @@ export default function App() {
           onToggleRecording={toggleRecording}
           hasBgImage={!!bgImage}
           isCollapsed={panelCollapsed}
-          onToggleCollapse={() => setPanelCollapsed((v) => !v)}
+          onToggleCollapse={handleToggleCollapse}
         />
       )}
 

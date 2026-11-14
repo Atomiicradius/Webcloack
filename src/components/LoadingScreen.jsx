@@ -3,9 +3,10 @@
  * Features animated hexagon, scanning lines, and status messages.
  */
 
+import { memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function LoadingScreen({ visible, message = 'INITIALIZING NEURAL ENGINE...' }) {
+function LoadingScreen({ visible, message = 'INITIALIZING NEURAL ENGINE...' }) {
   return (
     <AnimatePresence>
       {visible && (
@@ -106,3 +107,5 @@ export default function LoadingScreen({ visible, message = 'INITIALIZING NEURAL 
     </AnimatePresence>
   )
 }
+
+export default memo(LoadingScreen)

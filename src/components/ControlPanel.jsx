@@ -3,7 +3,7 @@
  * sliders, toggles, and capture controls. Supports 9 filter modes.
  */
 
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   IconCamera, IconImage, IconVideo, IconVideoOff,
@@ -12,7 +12,7 @@ import {
 } from './Icons.jsx'
 import { FILTERS, getFilter } from '../engine/filters.js'
 
-export default function ControlPanel({
+function ControlPanel({
   activeFilter,
   onFilterChange,
   intensity,
@@ -220,3 +220,5 @@ export default function ControlPanel({
     </motion.aside>
   )
 }
+
+export default memo(ControlPanel)

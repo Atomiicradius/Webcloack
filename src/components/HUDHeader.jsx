@@ -2,12 +2,13 @@
  * HUDHeader.jsx — Top floating HUD bar with app title, active filter, and telemetry badges.
  */
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { IconHexagon, IconActivity } from './Icons.jsx'
 import { getFilter } from '../engine/filters.js'
 
 
-export default function HUDHeader({
+function HUDHeader({
   fps = 0,
   confidence = 0,
   handsCount = 0,
@@ -73,3 +74,5 @@ export default function HUDHeader({
     </motion.header>
   )
 }
+
+export default memo(HUDHeader)

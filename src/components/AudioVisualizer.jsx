@@ -3,10 +3,10 @@
  * Shows bass/mid/treble energy bars and frequency spectrum.
  */
 
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 
-export default function AudioVisualizer({ audioLevels, visible }) {
+function AudioVisualizer({ audioLevels, visible }) {
   const canvasRef = useRef(null)
   const historyRef = useRef([])
 
@@ -73,3 +73,5 @@ export default function AudioVisualizer({ audioLevels, visible }) {
     </motion.div>
   )
 }
+
+export default memo(AudioVisualizer)
