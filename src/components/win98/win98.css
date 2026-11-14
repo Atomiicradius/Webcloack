@@ -220,6 +220,7 @@
   display: inline-flex;
   align-items: stretch;
   justify-content: stretch;
+  min-width: 0;
   min-height: 56px;
   padding: 0;
   border: 0;
@@ -255,9 +256,6 @@
 
 .w98-tool__label {
   max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .w98-tool__hint {

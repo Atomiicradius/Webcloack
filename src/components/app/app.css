@@ -46,7 +46,7 @@
 .wc-body {
   display: grid;
   grid-template-areas: 'tools stage panel';
-  grid-template-columns: 184px minmax(0, 1fr) 230px;
+  grid-template-columns: 216px minmax(0, 1fr) 230px;
   align-items: start;
   gap: var(--space-2);
   padding: var(--space-2);
@@ -414,6 +414,19 @@
     flex: 0 0 auto;
     min-width: 96px;
     min-height: 56px;
+  }
+
+  .wc-tools .w98-tool__label {
+    white-space: nowrap;
+  }
+}
+
+/* Narrow viewports: move the filter caption under the hands counter so the
+   two bottom chips never overlap */
+@media (max-width: 599px) {
+  .wc-hud--br {
+    top: 40px;
+    bottom: auto;
   }
 }
 
