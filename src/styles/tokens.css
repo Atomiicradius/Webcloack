@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    WEBCLOAK — design tokens
-   "Windows 98 chrome meets glossy Y2K cyber poster"
-   Flat colours, hard 1-2px bevels. No blur, no soft shadows, no gradients
-   except the desktop grid-line pattern.
+   Y2K blue chrome + Windows 98 window details. Gradients, gloss, chrome
+   bevels, hard shadows and glow are part of the look (see extension below).
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -52,6 +51,45 @@
     linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 48px 48px,
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 48px 48px,
     var(--blue-royal);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE CHROME extension (landing, boot, app)
+   One family: cobalt / royal blue, navy, silver-chrome, white.
+   Accents only: magenta (ticker, REC), mint / ice highlights.
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --cobalt: #2540D9;          /* = --blue-royal */
+  --cobalt-mid: #12208F;
+  --cobalt-bright: #4F6DFF;
+  --abyss: #060C3C;           /* deepest navy, outlines + hard shadows */
+  --ice: #9EC0FF;             /* pale blue lines, secondary text on dark */
+  --chrome-hi: #F5F7FF;
+  --chrome-lo: #7D8AB0;
+
+  /* Surfaces */
+  --bg-radial: radial-gradient(ellipse at 50% 30%, #2540D9 0%, #12208F 45%, #060C3C 100%);
+  --chrome-bezel: linear-gradient(145deg, #F5F7FF 0%, #9AA6C8 28%, #FFFFFF 46%, #7D8AB0 70%, #E8ECFF 100%);
+  --gloss-top: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 40%);
+  --glass: linear-gradient(180deg, rgba(6, 12, 60, 0.92), rgba(37, 64, 217, 0.72));
+  --gel-blue:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.08) 48%, rgba(0, 0, 0, 0.16) 52%, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(180deg, #4F6DFF, #1A2FB8);
+  --gel-silver:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 0, 0, 0.1) 52%, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(180deg, #E8ECFF, #8FA4D8);
+  --title-gradient: linear-gradient(90deg, #000080, #1084D0);
+
+  /* Hard shadows + glow */
+  --shadow-hard: 0 5px 0 rgba(6, 12, 60, 0.7);
+  --shadow-hard-lg: 6px 8px 0 rgba(6, 12, 60, 0.6);
+  --outline-abyss: 0 0 0 3px var(--abyss);
+  --glow-ice: 0 0 0 4px var(--white), 0 0 0 9px rgba(158, 192, 255, 0.55), 0 0 24px rgba(158, 192, 255, 0.7);
+
+  --radius-pill: 999px;
+  --radius-bezel: 26px;
+  --radius-panel: 22px;
+  --ticker-h: 48px;
 }
 
 /* Honour reduced motion: non-essential animation off. */

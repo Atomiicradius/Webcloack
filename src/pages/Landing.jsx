@@ -1,29 +1,447 @@
 /**
- * Landing.jsx — Temporary placeholder landing page (to be replaced).
- * Must not import anything from src/engine, MediaPipe or framer-motion.
+ * Landing.jsx — Marketing landing page (route `/`), animated with GSAP.
+ *
+ * Must not import anything from src/engine (except the pure filter
+ * registry), MediaPipe or the camera hooks: the landing chunk stays free of
+ * camera code. Launching only prefetches the /app chunk, then navigates;
+ * the camera starts on the boot screen.
+ *
+ * All motion runs inside useGSAP (scoped to the root, reverted on unmount,
+ * StrictMode safe) and gsap.matchMedia: with prefers-reduced-motion the
+ * page renders its final static state (CSS defaults) and nothing loops.
+ *
+ * Blending: the PNG assets have black backgrounds and rely on
+ * mix-blend-mode: screen (.ch-screen). Transforms/opacity create isolated
+ * stacking contexts, so .ch-screen sits on the OUTERMOST animated element of
+ * each asset and none of its ancestors may create a stacking context.
  */
 
-import { Link } from 'react-router-dom'
+import { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Draggable } from 'gsap/Draggable'
+import { SplitText } from 'gsap/SplitText'
+import { FILTERS } from '../engine/filters.js'
+import { loadCameraApp } from '../routes.js'
+import { Window } from '../components/win98/Window.jsx'
+import {
+  ChromeLogo, GelOrb, GridFloor, OrbitStar, Sparkle, Ticker, WireGlobe,
+} from '../components/chrome/Decor.jsx'
+import { floorY } from '../components/chrome/decorAssets.js'
+import './landing.css'
+
+gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText)
+
+const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
+
+const TICKER = [
+  'tracks 4 hands',
+  'invisibility cloak',
+  'matrix rain',
+  'thermal vision',
+  'audio reactive',
+  'runs in your browser',
+  'no upload',
+]
+
+// Hand-placed sparkles: [left %, top %, size px, colour]
+const SPARKLES = [
+  [12, 18, 34, 'var(--white)'],
+  [84, 14, 22, 'var(--ice)'],
+  [76, 70, 40, 'var(--white)'],
+  [20, 74, 20, 'var(--ice)'],
+  [60, 8, 16, 'var(--white)'],
+  [6, 46, 18, 'var(--white)'],
+  [93, 44, 26, 'var(--white)'],
+]
+
+// Filter windows in the draggable playground (from the single registry)
+const PLAYGROUND = [
+  { id: 'cloak', hue: 0 },
+  { id: 'matrix', hue: -40 },
+  { id: 'thermal', hue: 40 },
+  { id: 'kaleidoscope', hue: -20 },
+].map((p, i) => {
+  const def = FILTERS.find((f) => f.id === p.id)
+  return { ...p, def, index: FILTERS.indexOf(def) + 1, slot: i + 1 }
+})
+
+const STEPS = [
+  {
+    file: 'step1.exe',
+    title: 'raise your hands',
+    text: 'hold both hands up to the camera. webcloak tracks up to four at once.',
+    art: (
+      <svg viewBox="0 0 200 110" className="lp-step__art" aria-hidden="true" focusable="false">
+        <g fill="none" stroke="var(--ice)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M38 96V52M38 52L26 22M38 52l14-30M38 60l-18-6" />
+          <path d="M162 96V52M162 52l12-30M162 52l-14-30M162 60l18-6" />
+        </g>
+        <g fill="var(--white)">
+          <circle cx="26" cy="22" r="6" /><circle cx="52" cy="22" r="6" />
+          <circle cx="148" cy="22" r="6" /><circle cx="174" cy="22" r="6" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    file: 'step2.exe',
+    title: 'make a frame',
+    text: 'your thumbs and index fingers become the four corners of a window.',
+    art: (
+      <svg viewBox="0 0 200 110" className="lp-step__art" aria-hidden="true" focusable="false">
+        <polygon points="40,22 160,12 172,92 30,98" fill="rgba(158,192,255,0.18)" stroke="var(--white)" strokeWidth="3" strokeDasharray="8 6" />
+        <g fill="var(--white)">
+          <circle cx="40" cy="22" r="7" /><circle cx="160" cy="12" r="7" />
+          <circle cx="172" cy="92" r="7" /><circle cx="30" cy="98" r="7" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    file: 'step3.exe',
+    title: 'pick a filter',
+    text: 'click one, press 1-7, or pinch quickly to flip through them.',
+    art: (
+      <div className="lp-step__orbs" aria-hidden="true">
+        {[0, -40, 40, -20].map((h) => <GelOrb key={h} hue={h} className="lp-step__orb" />)}
+      </div>
+    ),
+  },
+]
 
 export default function Landing() {
+  const root = useRef(null)
+  const launching = useRef(false)
+  const navigate = useNavigate()
+
+  const { contextSafe } = useGSAP(() => {
+    const mm = gsap.matchMedia()
+
+    // ── Draggable filter windows (user-driven, so on for everyone) ──
+    const drags = Draggable.create('.lp-win', {
+      bounds: '.lp-playground',
+      zIndexBoost: true,
+      cursor: 'grab',
+      activeCursor: 'grabbing',
+    })
+
+    mm.add(
+      {
+        motion: '(prefers-reduced-motion: no-preference)',
+        wide: '(min-width: 900px)',
+      },
+      (ctx) => {
+        const { motion, wide } = ctx.conditions
+        if (!motion) return // static final state from CSS
+
+        // ── Hero intro ───────────────────────────────────────────
+        const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
+        intro
+          .from('.lp-hero__globe', { opacity: 0, scale: 0.55, duration: 1.3 })
+          .from('.lp-floor', { opacity: 0, yPercent: 30, duration: 1.1 }, 0)
+          .from('.lp-hero__orbit', { opacity: 0, scale: 0.4, rotation: -90, duration: 1.2 }, 0.2)
+          .from('.lp-hero__logo', { yPercent: -180, opacity: 0, duration: 0.9, ease: 'back.out(1.8)' }, 0.35)
+          .fromTo('.lp-flash', { opacity: 0 }, { opacity: 0.7, duration: 0.05, ease: 'none', yoyo: true, repeat: 1 }, '-=0.28')
+          .from('.lp-kicker', { opacity: 0, y: -12, duration: 0.4 }, '<')
+          .from('.lp-cta > *, .lp-note', { opacity: 0, y: 18, stagger: 0.08, duration: 0.45 }, '+=0.45')
+          .from('.lp-chip', { opacity: 0, scale: 0, stagger: 0.08, duration: 0.5, ease: 'back.out(2.2)' }, '<')
+
+        // Tagline revealed line by line (re-splits after fonts / resize)
+        SplitText.create('.lp-tagline', {
+          type: 'lines',
+          mask: 'lines',
+          autoSplit: true,
+          onSplit: (self) => gsap.from(self.lines, {
+            yPercent: 110, opacity: 0, duration: 0.6, stagger: 0.14, ease: 'power3.out',
+            delay: intro.time() < 1.2 ? 1.25 - intro.time() : 0,
+          }),
+        })
+
+        // ── Idle loops ───────────────────────────────────────────
+        // Globe: each meridian squeezes like a rotating sphere (|cos|)
+        gsap.utils.toArray('.lp-hero__globe .ch-globe__meridian').forEach((el, i) => {
+          gsap.fromTo(el,
+            { scaleX: 1 },
+            { scaleX: 0.002, duration: 14, ease: 'sine.in', yoyo: true, repeat: -1, transformOrigin: '50% 50%' },
+          ).totalTime(i * (28 / 6))
+        })
+        // Orbit ring: dashes travel continuously, orbit star spins
+        gsap.to('.lp-hero__globe .ch-globe__ring-dash', { strokeDashoffset: -180, duration: 5, ease: 'none', repeat: -1 })
+        gsap.to('.lp-hero__orbit img', { rotation: 360, duration: 36, ease: 'none', repeat: -1 })
+        gsap.to('.lp-hero__orbit', { y: -14, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 })
+        // Sparkles twinkle with staggered scale loops
+        gsap.fromTo('.lp-spark',
+          { scale: 0.45, opacity: 0.5, rotation: 0 },
+          {
+            scale: 1, opacity: 1, rotation: 25, duration: 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1,
+            stagger: { each: 0.37, from: 'random', repeat: -1, yoyo: true },
+          })
+        // Ticker: infinite loop (two identical runs, shift by half)
+        gsap.utils.toArray('.lp .ch-ticker__track').forEach((track) => {
+          const loop = gsap.to(track, { xPercent: -50, duration: 42, ease: 'none', repeat: -1 })
+          const band = track.parentElement
+          band.addEventListener('mouseenter', () => loop.pause())
+          band.addEventListener('mouseleave', () => loop.play())
+        })
+        // Grid floor scrolls toward the viewer
+        const rows = gsap.utils.toArray('.lp-floor .ch-floor__row')
+        const phase = { p: 0 }
+        gsap.to(phase, {
+          p: 1, duration: 2.6, ease: 'none', repeat: -1,
+          onUpdate: () => {
+            rows.forEach((row) => {
+              const y = floorY(Number(row.dataset.k), phase.p)
+              row.setAttribute('y1', y)
+              row.setAttribute('y2', y)
+            })
+          },
+        })
+
+        // ── Pointer parallax on globe, orbit and sparkles ────────
+        const hero = root.current.querySelector('.lp-hero')
+        const layers = gsap.utils.toArray('[data-depth]').map((el) => ({
+          depth: Number(el.dataset.depth),
+          x: gsap.quickTo(el, 'x', { duration: 0.9, ease: 'power3.out' }),
+          y: gsap.quickTo(el, 'y', { duration: 0.9, ease: 'power3.out' }),
+        }))
+        const onMove = (e) => {
+          const r = hero.getBoundingClientRect()
+          const nx = (e.clientX - r.left) / r.width - 0.5
+          const ny = (e.clientY - r.top) / r.height - 0.5
+          layers.forEach((l) => {
+            l.x(nx * 36 * l.depth)
+            l.y(ny * 24 * l.depth)
+          })
+        }
+        hero.addEventListener('pointermove', onMove)
+
+        // ── How it works: pinned + scrubbed (wide), reveals (narrow) ──
+        const steps = gsap.utils.toArray('.lp-step')
+        if (wide) {
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.lp-how',
+              start: 'top top',
+              end: '+=220%',
+              pin: true,
+              scrub: 0.6,
+            },
+          })
+          steps.forEach((step, i) => {
+            tl.from(step, {
+              xPercent: i % 2 ? 130 : -130,
+              yPercent: 30,
+              rotation: i % 2 ? 10 : -10,
+              opacity: 0,
+              duration: 1,
+              ease: 'power2.out',
+            }, i * 0.9)
+            tl.fromTo(`.lp-how__seg:nth-child(${i + 1})`, { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: 'none' }, i * 0.9 + 0.4)
+          })
+          tl.to({}, { duration: 0.4 }) // hold the last frame briefly
+        } else {
+          steps.forEach((step, i) => {
+            gsap.from(step, {
+              xPercent: i % 2 ? 40 : -40,
+              opacity: 0,
+              duration: 0.6,
+              ease: 'power2.out',
+              scrollTrigger: { trigger: step, start: 'top 85%' },
+            })
+          })
+        }
+
+        // Filter windows drop in once
+        gsap.from('.lp-win__inner', {
+          y: -60, opacity: 0, rotation: () => gsap.utils.random(-14, 14), stagger: 0.12, duration: 0.7,
+          ease: 'back.out(1.6)',
+          scrollTrigger: { trigger: '.lp-playground', start: 'top 75%' },
+        })
+
+        return () => hero.removeEventListener('pointermove', onMove)
+      },
+      root.current,
+    )
+
+    return () => {
+      drags.forEach((d) => d.kill())
+      mm.revert()
+    }
+  }, { scope: root })
+
+  // ── Launch: globe zooms, screen flashes white, then /app (boot) ──
+  const launch = contextSafe((e) => {
+    if (launching.current) return
+    launching.current = true
+    loadCameraApp() // prefetch the chunk; starts no camera
+    const go = () => navigate('/app', { state: { launch: true } })
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) {
+      go()
+      return
+    }
+    const heroVisible = window.scrollY < window.innerHeight * 0.6
+    const tl = gsap.timeline({ onComplete: go })
+    tl.to(e.currentTarget, { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1, ease: 'power1.inOut' })
+    if (heroVisible) {
+      tl.to('.lp-hero__copy > *, .lp-chip, .lp-nav', { opacity: 0, scale: 1.15, duration: 0.35, ease: 'power2.in' }, 0.05)
+        .to('.lp-hero__globe', { scale: 7, duration: 0.8, ease: 'power3.in' }, 0.05)
+        .to('.lp-hero__orbit, .lp-sparks', { scale: 2.4, opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.05)
+    }
+    tl.to('.lp-flash', { opacity: 1, duration: 0.28, ease: 'power1.in' }, heroVisible ? 0.55 : 0.1)
+  })
+
+  const prefetch = () => { loadCameraApp() }
+
   return (
-    <div
-      className="app-container"
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: '20px', textAlign: 'center',
-      }}
-    >
-      <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--cyan)' }}>WEBCLOAK</h1>
-      <p style={{ color: 'var(--text-dim)', fontFamily: 'var(--font-body)' }}>
-        A hand-tracked spatial magic window that runs in your browser.
-      </p>
-      <Link
-        to="/app"
-        style={{ color: 'var(--cyan)', fontFamily: 'var(--font-mono)', border: '1px solid var(--cyan)', padding: '10px 20px', borderRadius: 'var(--radius-md)', textDecoration: 'none' }}
-      >
-        Launch app
-      </Link>
+    <div className="lp" ref={root}>
+      <div className="lp-flash" aria-hidden="true" />
+
+      <header className="lp-nav">
+        <a className="lp-nav__brand" href="#top">webcloak.exe</a>
+        <nav className="lp-nav__links" aria-label="sections">
+          <a href="#how">how it works</a>
+          <a href="#filters">filters</a>
+          <a href={REPO_URL} target="_blank" rel="noreferrer">github</a>
+        </nav>
+      </header>
+
+      <main>
+        {/* ── Hero ───────────────────────────────────────────────── */}
+        <section className="lp-hero" id="top" aria-labelledby="lp-title">
+          <div className="lp-floor"><GridFloor /></div>
+
+          <div className="lp-hero__stage">
+            <div className="lp-hero__globe-wrap" data-depth="0.5">
+              <div className="lp-hero__globe"><WireGlobe ring /></div>
+            </div>
+            <div className="lp-hero__orbit-wrap ch-screen" data-depth="1.1">
+              <div className="lp-hero__orbit"><OrbitStar /></div>
+            </div>
+            <div className="lp-sparks" data-depth="1.6" aria-hidden="true">
+              {SPARKLES.map(([x, y, size, color]) => (
+                <span key={`${x}-${y}`} className="lp-spark-pos" style={{ left: `${x}%`, top: `${y}%` }}>
+                  <Sparkle size={size} color={color} className="lp-spark" />
+                </span>
+              ))}
+            </div>
+
+            <div className="lp-hero__copy">
+              <p className="lp-kicker">introducing</p>
+              <h1 id="lp-title" className="lp-hero__logo ch-screen"><ChromeLogo /></h1>
+              <p className="lp-tagline">
+                your hands are<br />the invisibility cloak.
+              </p>
+              <div className="lp-cta">
+                <button
+                  type="button"
+                  className="ch-pill lp-launch"
+                  onClick={launch}
+                  onPointerEnter={prefetch}
+                  onFocus={prefetch}
+                >
+                  <span aria-hidden="true">▶</span> launch cloak.exe
+                </button>
+                <a className="lp-link" href="#how">how it works ↓</a>
+              </div>
+              <p className="lp-note">runs in your browser. nothing is uploaded.</p>
+            </div>
+
+            <ul className="lp-chips" aria-label="at a glance">
+              <li className="lp-chip lp-chip--a">4 hands</li>
+              <li className="lp-chip lp-chip--b">{FILTERS.length} filters</li>
+              <li className="lp-chip lp-chip--c">0 uploads</li>
+            </ul>
+          </div>
+        </section>
+
+        <Ticker items={TICKER} />
+
+        {/* ── How it works (pinned on wide screens) ──────────────── */}
+        <section className="lp-how" id="how" aria-labelledby="lp-how-title">
+          <div className="lp-how__inner">
+            <div className="lp-how__head">
+              <h2 id="lp-how-title" className="lp-h2">how it works</h2>
+              <div className="lp-how__bar" aria-hidden="true">
+                <span className="lp-how__seg" /><span className="lp-how__seg" /><span className="lp-how__seg" />
+              </div>
+            </div>
+            <ol className="lp-how__steps">
+              {STEPS.map((s, i) => (
+                <li key={s.file} className="lp-step" style={{ '--tilt': `${[-2, 1.5, -1][i]}deg` }}>
+                  <Window title={s.file} titleAs="h3" decorativeControls className="lp-step__win">
+                    <div className="lp-step__body">
+                      <div className="lp-step__screen">{s.art}</div>
+                      <p className="lp-step__title"><span className="lp-step__num">{i + 1}.</span> {s.title}</p>
+                      <p className="lp-step__text">{s.text}</p>
+                    </div>
+                  </Window>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ── Filters playground (draggable) ─────────────────────── */}
+        <section className="lp-filters" id="filters" aria-labelledby="lp-filters-title">
+          <div className="lp-filters__head">
+            <h2 id="lp-filters-title" className="lp-h2">filters</h2>
+            <p className="lp-filters__sub">
+              {FILTERS.length} live effects. these four windows can be dragged around.
+            </p>
+          </div>
+          <div className="lp-playground">
+            {PLAYGROUND.map(({ id, hue, def, index, slot }) => {
+              const Icon = def.icon
+              return (
+                <div key={id} className={`lp-win lp-win--${slot}`}>
+                  <div className="lp-win__inner">
+                    <Window title={`${id}.exe`} titleAs="h3" decorativeControls>
+                      <div className="lp-win__body">
+                        <div className="lp-win__orb" aria-hidden="true">
+                          <GelOrb hue={hue} />
+                          <span className="lp-win__icon"><Icon size={26} /></span>
+                        </div>
+                        <div>
+                          <p className="lp-win__name">{def.label.toLowerCase()}</p>
+                          <p className="lp-win__desc">{def.description.toLowerCase()}.</p>
+                          <p className="lp-win__key">key {index}</p>
+                        </div>
+                      </div>
+                    </Window>
+                  </div>
+                </div>
+              )
+            })}
+            <Sparkle size={30} className="lp-playground__spark lp-playground__spark--a" />
+            <Sparkle size={18} color="var(--ice)" className="lp-playground__spark lp-playground__spark--b" />
+          </div>
+        </section>
+
+        {/* ── Final call to action ───────────────────────────────── */}
+        <section className="lp-final" aria-labelledby="lp-final-title">
+          <div className="lp-final__globe" aria-hidden="true"><WireGlobe /></div>
+          <h2 id="lp-final-title" className="lp-final__title">ready? hands up.</h2>
+          <p className="lp-final__text">the camera only turns on after you press launch. you can stop it any time.</p>
+          <button
+            type="button"
+            className="ch-pill lp-launch"
+            onClick={launch}
+            onPointerEnter={prefetch}
+            onFocus={prefetch}
+          >
+            <span aria-hidden="true">▶</span> launch cloak.exe
+          </button>
+        </section>
+      </main>
+
+      <footer className="lp-footer">
+        <span>webcloak. made with mediapipe, webgl and react.</span>
+        <a href={REPO_URL} target="_blank" rel="noreferrer">source on github</a>
+      </footer>
     </div>
   )
 }

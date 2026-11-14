@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    WIN98 COMPONENT KIT — every class is prefixed w98-
-   Hard 1-2px bevels only: no blur, no soft shadows, no gradients.
+   Used for small "window" elements (settings, dialogs) inside the blue
+   chrome look. Hard 1-2px bevels; title bars use the classic gradient.
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── Bevel utilities ─────────────────────────────────────────────── */
@@ -56,7 +57,7 @@
   gap: var(--space-1);
   min-height: 28px;
   padding: 2px 3px 2px 4px;
-  background: var(--navy-title);
+  background: var(--title-gradient);
   color: var(--white);
 }
 

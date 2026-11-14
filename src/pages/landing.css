@@ -1,0 +1,543 @@
+/* ═══════════════════════════════════════════════════════════════════
+   LANDING — classes prefixed lp-
+   Final (static) states live here; GSAP animates *from* them, so with
+   reduced motion the page is complete without any JavaScript motion.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.lp {
+  --lp-grid: rgba(158, 192, 255, 0.12);
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: var(--cobalt-mid);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.lp a {
+  color: var(--white);
+  text-underline-offset: 4px;
+}
+
+.lp a:focus-visible,
+.lp-nav a:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 4px;
+}
+
+.lp-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--white);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Nav ─────────────────────────────────────────────────────────── */
+.lp-nav {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 20px clamp(16px, 4vw, 48px);
+}
+
+.lp-nav__brand {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lp .lp-nav__brand {
+  color: var(--ice);
+}
+
+.lp-nav__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+}
+
+.lp-nav__links a {
+  text-decoration: none;
+}
+
+.lp-nav__links a:hover {
+  text-decoration: underline;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.lp-hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: max(680px, 100svh);
+  overflow: hidden;
+  background:
+    linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    var(--bg-radial);
+}
+
+.lp-floor {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 30%;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 35%);
+  mask-image: linear-gradient(180deg, transparent, #000 35%);
+}
+
+.lp-hero__stage {
+  position: relative;
+  width: min(1180px, 100%);
+  height: max(680px, 100svh);
+}
+
+.lp-hero__globe-wrap {
+  position: absolute;
+  inset: 0;
+  width: min(660px, 92vw);
+  height: min(660px, 92vw);
+  margin: auto;
+}
+
+.lp-hero__globe {
+  width: 100%;
+  height: 100%;
+}
+
+.lp-hero__orbit-wrap {
+  position: absolute;
+  top: 9%;
+  right: 6%;
+  width: min(270px, 36vw);
+}
+
+.lp-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lp-spark-pos {
+  position: absolute;
+}
+
+/* No z-index here: it would isolate the screen-blended logo (DOM order
+   already paints the copy above the globe). */
+.lp-hero__copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 96px 16px 48px;
+  text-align: center;
+}
+
+.lp-kicker {
+  color: var(--ice);
+  font-size: 26px;
+  letter-spacing: 6px;
+}
+
+/* Dark halo behind the screen-blended logo so it keeps contrast over the
+   globe lines (screen can only lighten). */
+.lp-hero__copy::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(760px, 100vw);
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(6, 12, 60, 0.85), rgba(6, 12, 60, 0));
+  content: "";
+  translate: -50% -62%;
+  pointer-events: none;
+}
+
+.lp-hero__logo {
+  position: relative;
+  width: min(620px, 88vw);
+  margin: 0;
+}
+
+.lp-kicker,
+.lp-tagline,
+.lp-cta,
+.lp-note {
+  position: relative;
+}
+
+.lp-tagline {
+  margin-top: 4px;
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1.05;
+  text-shadow: 2px 2px 0 var(--abyss);
+}
+
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 28px;
+  margin-top: 28px;
+}
+
+.lp-launch {
+  min-height: 64px;
+  padding: 0 34px;
+  font-size: 19px;
+}
+
+.lp-link {
+  font-size: 26px;
+}
+
+.lp-note {
+  margin-top: 18px;
+  color: var(--ice);
+  font-size: 22px;
+}
+
+.lp-chips {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.lp-chip {
+  position: absolute;
+  padding: 4px 16px;
+  border: 2px solid var(--ice);
+  border-radius: var(--radius-pill);
+  background: rgba(6, 12, 60, 0.75);
+  box-shadow: var(--shadow-hard);
+  font-size: 24px;
+  white-space: nowrap;
+}
+
+.lp-chip--a { top: 30%; left: 4%; }
+.lp-chip--b { top: 60%; right: 4%; background: var(--white); color: #0A1CA8; border-color: var(--white); }
+.lp-chip--c { bottom: 16%; left: 9%; }
+
+/* ── Section headings ────────────────────────────────────────────── */
+.lp-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 58px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 4px 4px 0 var(--abyss);
+}
+
+/* ── How it works ────────────────────────────────────────────────── */
+.lp-how {
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  padding: 72px clamp(16px, 4vw, 48px);
+  background:
+    linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(180deg, var(--abyss) 0%, var(--cobalt-mid) 100%);
+}
+
+.lp-how__inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.lp-how__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+/* Win98 segmented progress, fills as you scroll */
+.lp-how__bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--white);
+  box-shadow:
+    inset 1px 1px var(--win-dark),
+    inset -1px -1px var(--white),
+    inset 2px 2px var(--win-shadow),
+    inset -2px -2px var(--win-light);
+}
+
+.lp-how__seg {
+  display: block;
+  width: 72px;
+  height: 18px;
+  background: var(--title-gradient);
+  transform-origin: left center;
+}
+
+.lp-how__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  list-style: none;
+}
+
+.lp-step__win {
+  rotate: var(--tilt, 0deg);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white),
+    var(--shadow-hard-lg);
+}
+
+.lp-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.lp-step__screen {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  padding: 12px;
+  background: var(--bg-radial);
+  box-shadow:
+    inset 1px 1px var(--win-shadow),
+    inset -1px -1px var(--white),
+    inset 2px 2px var(--win-dark),
+    inset -2px -2px var(--win-light);
+}
+
+.lp-step__art {
+  width: 80%;
+  max-height: 120px;
+}
+
+.lp-step__orbs {
+  display: flex;
+  gap: 6px;
+}
+
+.lp-step__orb {
+  width: 64px;
+}
+
+.lp-step__title {
+  font-size: 28px;
+}
+
+.lp-step__num {
+  color: #0A1CA8;
+}
+
+.lp-step__text {
+  font-size: 22px;
+}
+
+/* ── Filters playground ──────────────────────────────────────────── */
+.lp-filters {
+  padding: 88px clamp(16px, 4vw, 48px) 72px;
+  background:
+    linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
+    var(--cobalt);
+}
+
+.lp-filters__head {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+}
+
+.lp-filters__sub {
+  margin-top: 10px;
+  font-size: 26px;
+}
+
+.lp-playground {
+  position: relative;
+  max-width: 1100px;
+  height: 560px;
+  margin: 0 auto;
+}
+
+.lp-win {
+  position: absolute;
+  width: min(320px, 86vw);
+  touch-action: none;
+}
+
+.lp-win--1 { top: 4%;  left: 1%;  --tilt: -4deg; }
+.lp-win--2 { top: 0;   left: 52%; --tilt: 3deg; }
+.lp-win--3 { top: 52%; left: 14%; --tilt: 2deg; }
+.lp-win--4 { top: 46%; left: 63%; --tilt: -3deg; }
+
+.lp-win__inner {
+  rotate: var(--tilt);
+}
+
+.lp-win__inner .w98-window {
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white),
+    var(--shadow-hard-lg);
+}
+
+.lp-win__body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.lp-win__orb {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--abyss);
+  box-shadow: inset 0 0 0 2px var(--win-shadow);
+}
+
+.lp-win__orb .ch-gel {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+}
+
+.lp-win__icon {
+  position: relative;
+  display: inline-flex;
+  color: var(--white);
+}
+
+.lp-win__name {
+  font-size: 28px;
+}
+
+.lp-win__desc {
+  font-size: 21px;
+}
+
+.lp-win__key {
+  margin-top: 4px;
+  color: #303030;
+  font-size: 19px;
+}
+
+.lp-playground__spark {
+  position: absolute;
+}
+
+.lp-playground__spark--a { top: 40%; left: 46%; }
+.lp-playground__spark--b { top: 88%; left: 4%; }
+
+/* ── Final CTA ───────────────────────────────────────────────────── */
+.lp-final {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+  padding: 110px 16px 96px;
+  text-align: center;
+  background: var(--bg-radial);
+}
+
+.lp-final__globe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 560px;
+  opacity: 0.35;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.lp-final__title {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 6vw, 72px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 5px 5px 0 var(--abyss);
+}
+
+.lp-final__text {
+  position: relative;
+  max-width: 34ch;
+  color: var(--ice);
+  font-size: 26px;
+}
+
+.lp-final .lp-launch {
+  margin-top: 12px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.lp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 22px clamp(16px, 4vw, 48px);
+  background: var(--abyss);
+  color: var(--ice);
+  font-size: 22px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 899px) {
+  .lp-how__steps {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 699px) {
+  .lp-chips {
+    display: none;
+  }
+
+  .lp-hero__orbit-wrap {
+    top: 12%;
+    right: -4%;
+  }
+
+  .lp-playground {
+    height: 1040px;
+  }
+
+  .lp-win--1 { top: 0;   left: 2%; }
+  .lp-win--2 { top: 25%; left: 8%; }
+  .lp-win--3 { top: 50%; left: 2%; }
+  .lp-win--4 { top: 75%; left: 8%; }
+}

@@ -1,0 +1,240 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE CHROME decor — classes prefixed ch-
+   Shared by landing, boot and app. Continuous loops here are CSS-only
+   (compositor transforms), and all of them stop under reduced motion.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Real image assets have black backgrounds: screen drops the black.
+   Blending only sees the backdrop inside the nearest stacking context, so
+   put .ch-screen on the outermost transformed / animated wrapper and keep
+   its ancestors free of z-index, transform, opacity and filter. */
+.ch-screen {
+  mix-blend-mode: screen;
+  user-select: none;
+  pointer-events: none;
+}
+
+.ch-logo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+}
+
+.ch-orbit-star,
+.ch-gel {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+/* ── Sparkle ─────────────────────────────────────────────────────── */
+.ch-sparkle {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(158, 192, 255, 0.9));
+}
+
+.ch-sparkle--twinkle {
+  animation: ch-twinkle 2.8s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes ch-twinkle {
+  0%, 100% { transform: scale(0.55) rotate(0deg); opacity: 0.55; }
+  50% { transform: scale(1) rotate(20deg); opacity: 1; }
+}
+
+/* ── Wireframe globe ─────────────────────────────────────────────── */
+.ch-globe {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.ch-globe__lines {
+  fill: none;
+  stroke: var(--ice);
+  stroke-opacity: 0.38;
+  stroke-width: 1.5;
+}
+
+.ch-globe__rim {
+  fill: none;
+  stroke: var(--ice);
+  stroke-opacity: 0.7;
+  stroke-width: 2;
+}
+
+.ch-globe__meridian {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* |cos| rotation: each meridian squeezes to a line and back; 6 offsets */
+.ch-globe--spin .ch-globe__meridian {
+  animation: ch-meridian 30s linear infinite;
+  animation-delay: calc(var(--i) * -5s);
+}
+
+@keyframes ch-meridian {
+  0% { transform: scaleX(1); animation-timing-function: ease-in; }
+  50% { transform: scaleX(0.002); animation-timing-function: ease-out; }
+  100% { transform: scaleX(1); }
+}
+
+.ch-globe__ring-band {
+  fill: none;
+  stroke: var(--ice);
+  stroke-opacity: 0.35;
+  stroke-width: 14;
+}
+
+.ch-globe__ring-dash {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 3;
+  stroke-dasharray: 2 16;
+  stroke-linecap: round;
+}
+
+/* ── Perspective grid floor ──────────────────────────────────────── */
+.ch-floor {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ch-floor__lines {
+  stroke: var(--ice);
+  stroke-opacity: 0.3;
+  stroke-width: 2;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.ch-floor__lines line {
+  vector-effect: non-scaling-stroke;
+}
+
+/* ── Ticker band ─────────────────────────────────────────────────── */
+.ch-ticker {
+  position: relative;
+  overflow: hidden;
+  height: var(--ticker-h);
+  background: var(--magenta);
+  border-top: 3px solid var(--white);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 28px;
+  line-height: calc(var(--ticker-h) - 3px);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.ch-ticker__track {
+  display: inline-flex;
+  will-change: transform;
+}
+
+.ch-ticker__run {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.ch-ticker__item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ch-ticker__star {
+  padding: 0 0.7em;
+  color: var(--ice);
+}
+
+.ch-ticker--css .ch-ticker__track {
+  animation: ch-ticker 48s linear infinite;
+}
+
+@keyframes ch-ticker {
+  to { transform: translateX(-50%); }
+}
+
+/* ── Glossy gel pill button ──────────────────────────────────────── */
+.ch-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 28px;
+  border: 3px solid var(--white);
+  border-radius: var(--radius-pill);
+  background: var(--gel-blue);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-shadow: 0 1px 0 rgba(6, 12, 60, 0.6);
+  box-shadow: var(--shadow-hard), var(--outline-abyss);
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-snap),
+    box-shadow var(--dur-fast) var(--ease-snap),
+    filter var(--dur-fast) var(--ease-snap);
+}
+
+.ch-pill--silver {
+  background: var(--gel-silver);
+  color: #0A1CA8;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.ch-pill:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.12) saturate(1.1);
+  box-shadow: 0 7px 0 rgba(6, 12, 60, 0.7), var(--outline-abyss), 0 0 26px rgba(158, 192, 255, 0.75);
+}
+
+.ch-pill:active:not(:disabled),
+.ch-pill[aria-pressed='true'] {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 rgba(6, 12, 60, 0.7), var(--outline-abyss);
+}
+
+.ch-pill:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 5px;
+}
+
+.ch-pill:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.8);
+}
+
+/* Accent dot (REC) */
+.ch-dot {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: var(--hot-magenta);
+  box-shadow: 0 0 8px var(--hot-magenta);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ch-sparkle--twinkle,
+  .ch-globe--spin .ch-globe__meridian,
+  .ch-ticker--css .ch-ticker__track {
+    animation: none;
+  }
+
+  .ch-pill {
+    transition: none;
+  }
+}
