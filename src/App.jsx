@@ -113,21 +113,21 @@ export default function App() {
 
     let rafId
     function gestureLoop() {
-      const pinchData = getPinchData()
-      if (pinchData.length > 0) {
-        const { gestureIntensity, filterSnap } = processGestures(pinchData)
+      const { pinchIntensity, filterSnap } = processGestures(getPinchData())
 
-        // Auto-adjust intensity from pinch gesture (live store, not React state)
-        live.intensity = live.intensity * 0.8 + gestureIntensity * 0.2
+      // A pinch overrides the slider only while actively pinching; when it
+      // ends, live.intensity simply keeps its last value.
+      if (pinchIntensity !== null) {
+        live.intensity = live.intensity * 0.8 + pinchIntensity * 0.2
+      }
 
-        // Cycle filter on pinch-snap
-        if (filterSnap) {
-          setActiveFilter((prev) => {
-            const idx = FILTERS.findIndex((f) => f.id === prev)
-            const next = (idx + 1) % FILTERS.length
-            return FILTERS[next].id
-          })
-        }
+      // Cycle filter on pinch-snap
+      if (filterSnap) {
+        setActiveFilter((prev) => {
+          const idx = FILTERS.findIndex((f) => f.id === prev)
+          const next = (idx + 1) % FILTERS.length
+          return FILTERS[next].id
+        })
       }
       rafId = requestAnimationFrame(gestureLoop)
     }
