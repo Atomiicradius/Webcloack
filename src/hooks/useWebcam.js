@@ -3,7 +3,12 @@
  *
  * Nothing runs on mount. Call `start()` (from a click) to request the camera;
  * `status` goes idle → starting → ready | error. `start()` can be called again
- * to retry after an error. The stream is released on unmount.
+ * to retry after an error or to resume after `pause()`.
+ *
+ * `pause()` stops every track (camera light off) and sets status 'paused'.
+ * `sessionLive` stays true from the first 'ready' through pauses and resumes,
+ * and drops to false on error, so engines can stay alive while paused.
+ * The stream is released on unmount.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -15,6 +20,7 @@ export function useWebcam() {
   const attemptRef = useRef(0)      // bumped to invalidate in-flight start() calls
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState(null)
+  const [sessionLive, setSessionLive] = useState(false)
   const [resolution, setResolution] = useState({ w: 0, h: 0 })
 
   /** Stop all tracks and detach the stream from the video element. */
@@ -80,6 +86,7 @@ export function useWebcam() {
           if (attempt !== attemptRef.current) return
           release()
           setError({ name: 'NotReadableError', message: 'Camera disconnected' })
+          setSessionLive(false)
           setStatus('error')
         }
       })
@@ -88,6 +95,7 @@ export function useWebcam() {
         if (attempt !== attemptRef.current) return
         video.play().catch(() => {})
         setResolution({ w: video.videoWidth, h: video.videoHeight })
+        setSessionLive(true)
         setStatus('ready')
       }
       video.srcObject = stream
@@ -96,8 +104,15 @@ export function useWebcam() {
       console.error('Webcam error:', err)
       release()
       setError({ name: err?.name || 'Error', message: err?.message || '' })
+      setSessionLive(false)
       setStatus('error')
     }
+  }, [release])
+
+  /** Stop the camera (light off) but keep the session for a later start(). */
+  const pause = useCallback(() => {
+    release()
+    setStatus('paused')
   }, [release])
 
   // Release the camera when the component using this hook unmounts.
@@ -107,8 +122,11 @@ export function useWebcam() {
     videoRef,
     status,
     isReady: status === 'ready',
+    isPaused: status === 'paused',
+    sessionLive,
     error,
     resolution,
     start,
+    pause,
   }
 }

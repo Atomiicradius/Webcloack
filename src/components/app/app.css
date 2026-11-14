@@ -278,6 +278,21 @@
     inset 1px 1px var(--white);
 }
 
+/* ── Paused overlay (inside the viewport) ────────────────────────── */
+.wc-paused {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.wc-paused .w98-msgbox {
+  width: min(360px, 100%);
+}
+
 /* ── Loading overlay ─────────────────────────────────────────────── */
 .wc-overlay {
   position: fixed;

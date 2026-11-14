@@ -1,13 +1,17 @@
 /**
  * useHandTracking.js — React hook wrapping MediaPipe hand detection loop.
  * Runs on RAF, extracts quads and pinch data each frame.
+ *
+ * `enabled`: the landmarker is created while true and closed when false.
+ * `running`: the detection loop runs only while true (false = paused; the
+ * landmarker stays loaded).
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { initHandLandmarker, closeHandLandmarker, detectHands, extractQuads, extractPinchData, getConfidence } from '../engine/handTracker.js'
 import { smoothPolygon } from '../engine/convexHull.js'
 
-export function useHandTracking(videoRef, isVideoReady) {
+export function useHandTracking(videoRef, { enabled, running }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
   const [error, setError] = useState(null)
@@ -19,9 +23,9 @@ export function useHandTracking(videoRef, isVideoReady) {
   const rafRef = useRef(null)
   const prevQuadsRef = useRef([])
 
-  // Initialize MediaPipe — only once the camera is running
+  // Initialize MediaPipe — only once the camera session is live
   useEffect(() => {
-    if (!isVideoReady) return
+    if (!enabled) return
     let cancelled = false
 
     async function setup() {
@@ -47,11 +51,11 @@ export function useHandTracking(videoRef, isVideoReady) {
       setIsLoading(true)
       setError(null)
     }
-  }, [isVideoReady, attempt])
+  }, [enabled, attempt])
 
   // Detection loop
   useEffect(() => {
-    if (!isInitialized || !isVideoReady || !videoRef.current) return
+    if (!isInitialized || !running || !videoRef.current) return
 
     const video = videoRef.current
 
@@ -101,7 +105,7 @@ export function useHandTracking(videoRef, isVideoReady) {
       confidenceRef.current = 0
       handsCountRef.current = 0
     }
-  }, [isInitialized, isVideoReady, videoRef])
+  }, [isInitialized, running, videoRef])
 
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
   const getQuads = useCallback(() => quadsRef.current, [])

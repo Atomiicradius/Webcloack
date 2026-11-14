@@ -7,11 +7,13 @@ import { useRef, useState, useEffect } from 'react'
 
 const REPORT_INTERVAL_MS = 250
 
-export function useFPS() {
+export function useFPS(active = true) {
   const frames    = useRef([])
   const [fps, setFps] = useState(0)
 
   useEffect(() => {
+    if (!active) return
+    frames.current = []
     let rafId
     let lastReport = 0
     function tick(now) {
@@ -28,7 +30,7 @@ export function useFPS() {
     }
     rafId = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafId)
-  }, [])
+  }, [active])
 
-  return fps
+  return active ? fps : 0
 }

@@ -21,7 +21,7 @@ import { live, ZERO_LEVELS } from './engine/liveState.js'
 import MagicCanvas from './components/MagicCanvas.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import CameraGate from './components/CameraGate.jsx'
-import { AppIcon, StatusField, TitleBarButton, Window } from './components/win98/index.js'
+import { AppIcon, StatusField, TitleBarButton, ToolButton, Window } from './components/win98/index.js'
 import FilterTools from './components/app/FilterTools.jsx'
 import SidePanel from './components/app/SidePanel.jsx'
 import ViewportHud from './components/app/ViewportHud.jsx'
@@ -29,6 +29,8 @@ import Taskbar from './components/app/Taskbar.jsx'
 import ShortcutsDialog from './components/app/ShortcutsDialog.jsx'
 import Toasts from './components/app/Toasts.jsx'
 import TrackingBanner from './components/app/TrackingBanner.jsx'
+import PausedOverlay from './components/app/PausedOverlay.jsx'
+import { IconCamera } from './components/Icons.jsx'
 import './components/app/app.css'
 
 const UI_SYNC_INTERVAL_MS = 100
@@ -40,6 +42,7 @@ const SHORTCUTS = [
   ['r', 'start / stop recording'],
   ['w', 'wireframe on / off'],
   ['a', 'audio reactive on / off'],
+  ['c', 'camera on / off'],
   ['esc', 'close this dialog'],
 ]
 
@@ -66,6 +69,7 @@ export default function CameraApp() {
   const [handsCount, setHandsCount] = useState(0)
   const [toasts, setToasts] = useState([])
   const [helpOpen, setHelpOpen] = useState(false)
+  const [autoPaused, setAutoPaused] = useState(false)
 
   // ── Refs ───────────────────────────────────────────────────────
   const canvasRef = useRef(null)
@@ -75,15 +79,20 @@ export default function CameraApp() {
   const toastIdRef = useRef(0)
   const helpButtonRef = useRef(null)
   const helpOpenRef = useRef(false)
+  const autoPausedRef = useRef(false)   // paused by tab visibility, not by the user
+  const cameraStatusRef = useRef('idle')
 
   // ── Hooks ──────────────────────────────────────────────────────
   const {
     videoRef,
     status: cameraStatus,
     isReady: isVideoReady,
+    isPaused: isCameraPaused,
+    sessionLive,
     error: webcamError,
     resolution,
     start: startCamera,
+    pause: pauseWebcam,
   } = useWebcam()
   const {
     isLoading: isTrackingLoading,
@@ -94,12 +103,16 @@ export default function CameraApp() {
     getPinchData,
     getConfidence,
     getHandsCount,
-  } = useHandTracking(videoRef, isVideoReady)
+  } = useHandTracking(videoRef, { enabled: sessionLive, running: isVideoReady })
   const { processGestures } = useGestureDetector()
-  const fps = useFPS()
+  const fps = useFPS(isVideoReady)
 
   // ── Computed ───────────────────────────────────────────────────
-  const isLoading = !isVideoReady || isTrackingLoading
+  const showApp = cameraStatus === 'starting' || cameraStatus === 'ready' || cameraStatus === 'paused'
+  // Full loading screen only for the first start; resumes show an in-viewport notice
+  const isLoading = showApp && (!sessionLive || isTrackingLoading)
+  // Engines stay alive but every loop stops while paused or re-acquiring
+  const isHalted = sessionLive && !isVideoReady
   const filterDef = getFilter(activeFilter)
 
   // ── Toast helper ───────────────────────────────────────────────
@@ -114,10 +127,10 @@ export default function CameraApp() {
   }, [])
 
   // ── Initialize render pipeline ─────────────────────────────────
-  // Created when the camera becomes ready, destroyed when it stops or the
-  // component unmounts (initPipeline is itself idempotent).
+  // Created when the camera session starts, kept through pauses, destroyed
+  // on camera error or unmount (initPipeline is itself idempotent).
   useEffect(() => {
-    if (!isVideoReady) return
+    if (!sessionLive) return
     const video = videoRef.current
     initPipeline(video?.videoWidth || 1280, video?.videoHeight || 720)
 
@@ -129,7 +142,7 @@ export default function CameraApp() {
       showToast(`shader failed: ${names.join(', ')}`, 'error')
     }
     return () => destroyPipeline()
-  }, [isVideoReady, videoRef, showToast])
+  }, [sessionLive, videoRef, showToast])
 
   // ── Throttled UI sync (~10 Hz) ─────────────────────────────────
   // Per-frame values (intensity, audio levels, tracking stats) live in refs /
@@ -147,7 +160,7 @@ export default function CameraApp() {
 
   // ── Gesture processing ─────────────────────────────────────────
   useEffect(() => {
-    if (!isTrackingReady) return
+    if (!isTrackingReady || !isVideoReady) return
 
     let rafId
     function gestureLoop() {
@@ -171,12 +184,15 @@ export default function CameraApp() {
     }
     rafId = requestAnimationFrame(gestureLoop)
     return () => cancelAnimationFrame(rafId)
-  }, [isTrackingReady, getPinchData, processGestures])
+  }, [isTrackingReady, isVideoReady, getPinchData, processGestures])
 
   // ── Capture background ─────────────────────────────────────────
   const captureBackground = useCallback(() => {
     const video = videoRef.current
-    if (!video || video.readyState < 2) return
+    if (!video || video.readyState < 2) {
+      showToast('turn the camera on first', 'info')
+      return
+    }
 
     const bgCanvas = document.createElement('canvas')
     bgCanvas.width = video.videoWidth
@@ -217,6 +233,10 @@ export default function CameraApp() {
   const startRecording = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    if (cameraStatusRef.current !== 'ready') {
+      showToast('turn the camera on first', 'info')
+      return
+    }
 
     const mimeType = pickRecorderMimeType()
     if (!mimeType || typeof canvas.captureStream !== 'function') {
@@ -306,6 +326,47 @@ export default function CameraApp() {
     }
   }, [])
 
+  // ── Camera pause / resume ──────────────────────────────────────
+  useEffect(() => {
+    cameraStatusRef.current = cameraStatus
+  }, [cameraStatus])
+
+  /** Stop the camera (light off), saving any recording first. Engines stay alive. */
+  const pauseCamera = useCallback((auto = false) => {
+    if (cameraStatusRef.current !== 'ready') return
+    if (mediaRecorderRef.current?.state === 'recording') stopRecording()
+    autoPausedRef.current = auto
+    setAutoPaused(auto)
+    pauseWebcam()
+  }, [pauseWebcam, stopRecording])
+
+  /** Re-acquire the camera; on failure useWebcam lands on the error screen. */
+  const resumeCamera = useCallback(() => {
+    if (cameraStatusRef.current !== 'paused') return
+    autoPausedRef.current = false
+    setAutoPaused(false)
+    startCamera()
+  }, [startCamera])
+
+  const toggleCamera = useCallback(() => {
+    if (cameraStatusRef.current === 'ready') pauseCamera(false)
+    else if (cameraStatusRef.current === 'paused') resumeCamera()
+  }, [pauseCamera, resumeCamera])
+
+  // Auto-pause while the tab is hidden; auto-resume only if the app paused it
+  // (a manual stop is never overridden).
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.hidden) {
+        if (cameraStatusRef.current === 'ready') pauseCamera(true)
+      } else if (autoPausedRef.current && cameraStatusRef.current === 'paused') {
+        resumeCamera()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [pauseCamera, resumeCamera])
+
   // ── Stable handlers for memoized children ──────────────────────
   const handleFilterChange = useCallback((f) => {
     setActiveFilter(f)
@@ -361,6 +422,10 @@ export default function CameraApp() {
         case 'A':
           toggleAudio()
           break
+        case 'c':
+        case 'C':
+          toggleCamera()
+          break
         default: {
           // Digit keys 1..N select filters; N comes from the registry (max 9).
           if (/^[1-9]$/.test(e.key)) {
@@ -377,13 +442,14 @@ export default function CameraApp() {
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio])
+  }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio, toggleCamera])
 
-  const showApp = cameraStatus === 'starting' || cameraStatus === 'ready'
   const aspect = resolution.w > 0 && resolution.h > 0 ? `${resolution.w} / ${resolution.h}` : '16 / 9'
 
   let statusMessage = 'ready'
-  if (isRecording) statusMessage = 'recording'
+  if (isCameraPaused) statusMessage = 'camera paused'
+  else if (isHalted) statusMessage = 'starting camera'
+  else if (isRecording) statusMessage = 'recording'
   else if (trackingError) statusMessage = 'hand tracking unavailable'
   else if (handsCount < 2) statusMessage = 'show both hands to open a portal'
 
@@ -425,7 +491,18 @@ export default function CameraApp() {
             )}
           >
             <div className="wc-body">
-              <FilterTools activeFilter={activeFilter} onSelect={handleFilterChange} />
+              <FilterTools activeFilter={activeFilter} onSelect={handleFilterChange}>
+                <ToolButton
+                  layout="row"
+                  icon={<IconCamera size={20} />}
+                  label={isCameraPaused ? 'camera: off' : 'camera: on'}
+                  aria-label="camera"
+                  aria-keyshortcuts="c"
+                  pressed={!isCameraPaused}
+                  disabled={cameraStatus === 'starting'}
+                  onClick={toggleCamera}
+                />
+              </FilterTools>
 
               <div className="wc-stage">
                 {/* Non-blocking hand-tracking failure notice */}
@@ -440,6 +517,7 @@ export default function CameraApp() {
                       bgImage={bgImage}
                       showWireframe={showWireframe}
                       audioEnabled={audioEnabled}
+                      paused={isHalted}
                       canvasRef={canvasRef}
                     />
                     <ViewportHud
@@ -448,6 +526,13 @@ export default function CameraApp() {
                       handsCount={handsCount}
                       filter={filterDef}
                     />
+                    {isHalted && !isLoading && (
+                      <PausedOverlay
+                        resuming={cameraStatus === 'starting'}
+                        autoPaused={autoPaused}
+                        onResume={resumeCamera}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -478,7 +563,7 @@ export default function CameraApp() {
       {showApp && (
         <LoadingScreen
           visible={isLoading}
-          cameraReady={isVideoReady}
+          cameraReady={sessionLive}
           trackingReady={isTrackingReady}
           trackingFailed={Boolean(trackingError)}
         />

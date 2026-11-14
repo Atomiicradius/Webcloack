@@ -21,6 +21,7 @@ function MagicCanvas({
   bgImage,
   showWireframe,
   audioEnabled,
+  paused = false,
   canvasRef: externalCanvasRef,
 }) {
   const internalCanvasRef = useRef(null)
@@ -34,6 +35,8 @@ function MagicCanvas({
   })
 
   useEffect(() => {
+    // Paused: no loop at all; the canvas keeps its last frame.
+    if (paused) return
     let rafId = null
 
     function renderLoop() {
@@ -110,7 +113,7 @@ function MagicCanvas({
     return () => {
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [videoRef, canvasRef])
+  }, [videoRef, canvasRef, paused])
 
   return (
     <canvas
