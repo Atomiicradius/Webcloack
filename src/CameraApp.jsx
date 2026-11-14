@@ -24,6 +24,7 @@ import ControlPanel from './components/ControlPanel.jsx'
 import MagicCanvas from './components/MagicCanvas.jsx'
 import AudioVisualizer from './components/AudioVisualizer.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
+import CameraGate from './components/CameraGate.jsx'
 
 const UI_SYNC_INTERVAL_MS = 100
 
@@ -59,7 +60,14 @@ export default function CameraApp() {
   const toastIdRef = useRef(0)
 
   // ── Hooks ──────────────────────────────────────────────────────
-  const { videoRef, isReady: isVideoReady, error: webcamError, resolution } = useWebcam()
+  const {
+    videoRef,
+    status: cameraStatus,
+    isReady: isVideoReady,
+    error: webcamError,
+    resolution,
+    start: startCamera,
+  } = useWebcam()
   const {
     isLoading: isTrackingLoading,
     isInitialized: isTrackingReady,
@@ -319,29 +327,7 @@ export default function CameraApp() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio])
 
-  // ── Webcam error ───────────────────────────────────────────────
-  if (webcamError) {
-    return (
-      <div className="app-container" style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: '20px',
-      }}>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: '24px',
-          background: 'linear-gradient(135deg, #00f3ff, #b026ff)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>
-          WEBCLOAK
-        </h1>
-        <p style={{ color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-          Camera access denied or unavailable.
-        </p>
-        <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
-          Please allow camera permissions and reload the page.
-        </p>
-      </div>
-    )
-  }
+  const showApp = cameraStatus === 'starting' || cameraStatus === 'ready'
 
   return (
     <div className="app-container">
@@ -354,6 +340,12 @@ export default function CameraApp() {
         muted
       />
 
+      {/* Start / error screen (nothing camera-related runs until Start) */}
+      {!showApp && (
+        <CameraGate status={cameraStatus} error={webcamError} onStart={startCamera} />
+      )}
+
+      {showApp && (<>
       {/* Main render canvas */}
       <MagicCanvas
         videoRef={videoRef}
@@ -416,6 +408,7 @@ export default function CameraApp() {
           />
         )}
       </AnimatePresence>
+      </>)}
 
       {/* Toast Notifications */}
       <div className="toast-container">

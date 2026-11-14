@@ -17,8 +17,9 @@ export function useHandTracking(videoRef, isVideoReady) {
   const rafRef = useRef(null)
   const prevQuadsRef = useRef([])
 
-  // Initialize MediaPipe
+  // Initialize MediaPipe — only once the camera is running
   useEffect(() => {
+    if (!isVideoReady) return
     let cancelled = false
 
     async function setup() {
@@ -36,7 +37,7 @@ export function useHandTracking(videoRef, isVideoReady) {
 
     setup()
     return () => { cancelled = true }
-  }, [])
+  }, [isVideoReady])
 
   // Detection loop
   useEffect(() => {
