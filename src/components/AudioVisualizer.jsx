@@ -46,7 +46,7 @@ function AudioVisualizer({ audioLevels, visible }) {
     }
 
     // Band labels
-    ctx.font = '8px "JetBrains Mono", monospace'
+    ctx.font = '8px monospace'
     ctx.fillStyle = 'hsla(190, 100%, 70%, 0.7)'
     ctx.fillText(`BASS ${Math.round(bass * 100)}`, 4, canvas.height - 4)
     ctx.fillStyle = 'hsla(280, 100%, 70%, 0.7)'

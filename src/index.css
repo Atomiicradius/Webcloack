@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@400;600;700;900&display=swap');
-
 /* ═══════════════════════════════════════════════════════════════════
    WEBCLOAK — Design System
    Ultra-polished futuristic dark-mode HUD
@@ -17,9 +15,7 @@
   --cyan: #00f3ff;
   --cyan-dim: rgba(0, 243, 255, 0.6);
   --cyan-subtle: rgba(0, 243, 255, 0.1);
-  --purple: #b026ff;
   --purple-dim: rgba(176, 38, 255, 0.6);
-  --magenta: #ff2d95;
   --neon-green: #39ff14;
   --amber: #ffab00;
   --red: #ff3d3d;
@@ -32,9 +28,9 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-glow: 0 0 30px rgba(0, 243, 255, 0.08);
 
-  --font-display: 'Orbitron', sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Legacy aliases: old fonts removed; --font-display comes from tokens.css */
+  --font-body: var(--font-ui);
+  --font-mono: var(--font-ui);
 
   --radius-sm: 6px;
   --radius-md: 10px;

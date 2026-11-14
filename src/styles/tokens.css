@@ -1,0 +1,64 @@
+/* ═══════════════════════════════════════════════════════════════════
+   WEBCLOAK — design tokens
+   "Windows 98 chrome meets glossy Y2K cyber poster"
+   Flat colours, hard 1-2px bevels. No blur, no soft shadows, no gradients
+   except the desktop grid-line pattern.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Palette ─────────────────────────────────────────────────── */
+  --blue-royal: #2540D9;   /* desktop background */
+  --navy: #0B1470;
+  --navy-title: #000080;   /* title bars, progress blocks */
+  --globe: #1A2BA8;
+  --mint: #9DFBD0;         /* primary accent on dark (never on gray) */
+  --magenta: #C41FB0;      /* bands/badges, white text on it */
+  --hot-magenta: #E02BC8;  /* accents only, not for text backgrounds */
+  --purple: #B53DE0;
+  --win-gray: #C0C0C0;
+  --win-light: #DFDFDF;
+  --win-shadow: #808080;
+  --win-dark: #0A0A0A;
+  --white: #FFFFFF;
+  --black: #000000;
+
+  /* ── Type ────────────────────────────────────────────────────── */
+  --font-display: 'Unbounded', 'Arial Black', sans-serif;  /* 700/900, headings + logo only */
+  --font-ui: 'VT323', monospace;                            /* everything else */
+  --text-ui: 20px;      /* default UI size */
+  --text-ui-min: 18px;  /* VT323 is thin: never go below this */
+  --text-ui-lg: 24px;
+
+  /* ── Spacing / sizes ─────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --taskbar-h: 40px;
+  --hit-min: 40px;      /* touch target minimum */
+
+  /* ── Motion: stepped and snappy ──────────────────────────────── */
+  --dur-instant: 60ms;
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --dur-progress: 1400ms;
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1);
+  --ease-step: steps(4, end);
+
+  /* ── Desktop background: royal blue + 48px mint grid lines ──── */
+  --grid-line: rgba(157, 251, 208, 0.14);
+  --desktop-bg:
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 48px 48px,
+    var(--blue-royal);
+}
+
+/* Honour reduced motion: non-essential animation off. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-fast: 0ms;
+    --dur-med: 0ms;
+  }
+}

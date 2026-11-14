@@ -159,7 +159,7 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
       ctx.fillRect(0, 0, width, height)
       ctx.fillStyle = 'rgba(0, 243, 255, 0.3)'
-      ctx.font = '16px "Orbitron", sans-serif'
+      ctx.font = '20px "VT323", monospace'
       ctx.textAlign = 'center'
       const c = centroid(quad)
       ctx.fillText('CAPTURE BACKGROUND', c[0], c[1])

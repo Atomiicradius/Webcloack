@@ -76,7 +76,7 @@ export class MatrixRain {
     ctx.restore()
 
     // ── 3. Draw character rain with luminosity mapping ───────────
-    ctx.font = `${this.fontSize}px "JetBrains Mono", monospace`
+    ctx.font = `${this.fontSize}px monospace`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
