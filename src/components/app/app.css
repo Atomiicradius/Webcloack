@@ -1,0 +1,332 @@
+/* ═══════════════════════════════════════════════════════════════════
+   CAMERA APP LAYOUT — classes prefixed wc-
+   Built on the Win98 kit (w98-*). Flat colours, hard bevels only.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Desktop ─────────────────────────────────────────────────────── */
+.wc-desktop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: auto;
+  padding: var(--space-5) var(--space-4) calc(var(--taskbar-h) + var(--space-5));
+  background: var(--desktop-bg);
+  color: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+}
+
+/* Hidden source video for the canvas pipeline */
+.wc-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Centres whatever the desktop shows (window or dialog), safe on overflow */
+.wc-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ── Main window ─────────────────────────────────────────────────── */
+.wc-window {
+  width: 100%;
+  max-width: 1120px;
+  margin: auto;
+}
+
+.wc-body {
+  display: grid;
+  grid-template-areas: 'tools stage panel';
+  grid-template-columns: 184px minmax(0, 1fr) 230px;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+/* ── Filter tools ────────────────────────────────────────────────── */
+.wc-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  grid-area: tools;
+  min-width: 0;
+}
+
+.wc-tools__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.wc-tools__extra {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Stage: viewport + caption ───────────────────────────────────── */
+.wc-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  grid-area: stage;
+  min-width: 0;
+}
+
+.wc-viewport {
+  padding: 2px;
+  background: var(--win-gray);
+}
+
+.wc-viewport__screen {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  aspect-ratio: var(--cam-aspect, 16 / 9);
+  background: var(--black);
+}
+
+.wc-viewport__screen .magic-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Viewport HUD: mint VT323 on black chips (readable over video) ── */
+.wc-hud {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  padding: 1px 6px;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--mint);
+  font-size: var(--text-ui-min);
+  line-height: 1.1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.wc-hud--tl { top: 8px; left: 8px; }
+.wc-hud--tr { top: 8px; right: 8px; }
+.wc-hud--bl { bottom: 8px; left: 8px; }
+.wc-hud--br { right: 8px; bottom: 8px; }
+
+.wc-hud__rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--hot-magenta);
+}
+
+/* ── Right panel ─────────────────────────────────────────────────── */
+.wc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  grid-area: panel;
+  min-width: 0;
+}
+
+.wc-panel__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.wc-panel__filter-name {
+  font-size: var(--text-ui-lg);
+  line-height: 1;
+}
+
+.wc-panel__text {
+  font-size: var(--text-ui-min);
+  line-height: 1.1;
+}
+
+.wc-band {
+  display: block;
+  padding: 2px 6px;
+  background: var(--magenta);
+  color: var(--white);
+  font-size: var(--text-ui-min);
+  line-height: 1.1;
+}
+
+/* Audio visualizer: mint on black */
+.wc-audio {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-ui-min);
+  line-height: 1.1;
+}
+
+.wc-audio__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+/* ── Taskbar ─────────────────────────────────────────────────────── */
+.wc-taskbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--taskbar-h);
+  padding: 4px;
+  background: var(--win-gray);
+  box-shadow: inset 0 1px var(--win-light), inset 0 2px var(--white);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui-min);
+}
+
+/* Flat band, not bevelled, so it never reads as a button */
+.wc-taskbar__start {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 10px;
+  background: var(--magenta);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.wc-taskbar__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  min-width: 0;
+  max-width: 200px;
+  padding: 0 8px;
+  overflow: hidden;
+  background: var(--win-light);
+  white-space: nowrap;
+  user-select: none;
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.wc-taskbar__clock {
+  margin-left: auto;
+  height: 100%;
+}
+
+/* ── Modal layer (help dialog) ───────────────────────────────────── */
+.wc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-4) calc(var(--taskbar-h) + var(--space-4));
+}
+
+.wc-shortcuts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px var(--space-3);
+  padding: var(--space-2);
+  background: var(--white);
+  font-size: var(--text-ui-min);
+  line-height: 1.15;
+}
+
+.wc-shortcuts dt {
+  font-weight: 400;
+}
+
+.wc-kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 0 4px;
+  text-align: center;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white);
+}
+
+/* ── Responsive: below ~900px ────────────────────────────────────── */
+@media (max-width: 899px) {
+  .wc-desktop {
+    display: block;
+    padding: 0 0 var(--taskbar-h);
+  }
+
+  .wc-main {
+    display: block;
+  }
+
+  .wc-window {
+    max-width: none;
+    margin: 0;
+  }
+
+  .wc-body {
+    grid-template-areas:
+      'tools'
+      'stage'
+      'panel';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Filter tools become one horizontally scrollable row */
+  .wc-tools {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .wc-tools__grid,
+  .wc-tools__extra {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .wc-tools .w98-tool {
+    flex: 0 0 auto;
+    min-width: 96px;
+    min-height: 56px;
+  }
+}
+
+/* Touch: keep every target >= 40px */
+@media (pointer: coarse) {
+  .wc-taskbar {
+    height: 44px;
+  }
+}

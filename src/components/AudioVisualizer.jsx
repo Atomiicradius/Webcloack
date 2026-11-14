@@ -1,76 +1,69 @@
 /**
- * AudioVisualizer.jsx — Bottom-left audio waveform mini-display.
- * Shows bass/mid/treble energy bars and frequency spectrum.
+ * AudioVisualizer.jsx — Bass/mid/treble history, mint on black.
+ * Draws from throttled audio levels; shows a short note when the mic is off.
  */
 
 import { memo, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+
+const MINT = '157, 251, 208'
 
 function AudioVisualizer({ audioLevels, visible }) {
   const canvasRef = useRef(null)
   const historyRef = useRef([])
 
   useEffect(() => {
-    if (!visible || !canvasRef.current) return
-
+    if (!visible) {
+      historyRef.current = []
+      return
+    }
     const canvas = canvasRef.current
+    if (!canvas) return
+
     const ctx = canvas.getContext('2d')
     const { bass, mid, treble } = audioLevels
 
-    // Push to history
     historyRef.current.push({ bass, mid, treble })
     if (historyRef.current.length > 64) historyRef.current.shift()
 
-    // Clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Draw waveform history
     const history = historyRef.current
-    const barW = canvas.width / history.length
+    const barW = canvas.width / 64
+    const h = canvas.height
 
     for (let i = 0; i < history.length; i++) {
-      const h = history[i]
+      const s = history[i]
       const x = i * barW
-
-      // Bass (cyan)
-      ctx.fillStyle = `hsla(190, 100%, 60%, ${0.4 + h.bass * 0.5})`
-      ctx.fillRect(x, canvas.height - h.bass * canvas.height * 0.4, barW - 1, h.bass * canvas.height * 0.4)
-
-      // Mid (purple)
-      ctx.fillStyle = `hsla(280, 100%, 60%, ${0.3 + h.mid * 0.4})`
-      ctx.fillRect(x, canvas.height * 0.35 - h.mid * canvas.height * 0.3, barW - 1, h.mid * canvas.height * 0.3)
-
-      // Treble (white)
-      ctx.fillStyle = `hsla(0, 0%, 80%, ${0.2 + h.treble * 0.3})`
-      ctx.fillRect(x, canvas.height * 0.05, barW - 1, h.treble * canvas.height * 0.15)
+      // Bass: bottom band, full mint
+      ctx.fillStyle = `rgba(${MINT}, 1)`
+      ctx.fillRect(x, h - s.bass * h * 0.45, barW - 1, s.bass * h * 0.45)
+      // Mid: middle band
+      ctx.fillStyle = `rgba(${MINT}, 0.7)`
+      ctx.fillRect(x, h * 0.5 - s.mid * h * 0.3, barW - 1, s.mid * h * 0.3)
+      // Treble: top band
+      ctx.fillStyle = `rgba(${MINT}, 0.45)`
+      ctx.fillRect(x, 0, barW - 1, s.treble * h * 0.15)
     }
-
-    // Band labels
-    ctx.font = '8px monospace'
-    ctx.fillStyle = 'hsla(190, 100%, 70%, 0.7)'
-    ctx.fillText(`BASS ${Math.round(bass * 100)}`, 4, canvas.height - 4)
-    ctx.fillStyle = 'hsla(280, 100%, 70%, 0.7)'
-    ctx.fillText(`MID ${Math.round(mid * 100)}`, 4, canvas.height * 0.4)
-    ctx.fillStyle = 'hsla(0, 0%, 80%, 0.6)'
-    ctx.fillText(`TRB ${Math.round(treble * 100)}`, 4, 10)
   }, [audioLevels, visible])
 
-  if (!visible) return null
+  if (!visible) {
+    return (
+      <div className="wc-audio">
+        <span>mic off</span>
+        <span>tick audio reactive to start</span>
+      </div>
+    )
+  }
 
+  const pct = (v) => Math.round(v * 100)
   return (
-    <motion.div
-      className="audio-visualizer"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-    >
-      <canvas
-        ref={canvasRef}
-        width={200}
-        height={80}
-        className="audio-canvas"
-      />
-    </motion.div>
+    <div className="wc-audio">
+      <canvas ref={canvasRef} width={200} height={64} className="wc-audio__canvas" aria-hidden="true" />
+      <span>
+        bass {pct(audioLevels.bass)} mid {pct(audioLevels.mid)} treble {pct(audioLevels.treble)}
+      </span>
+    </div>
   )
 }
 
