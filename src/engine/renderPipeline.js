@@ -13,12 +13,16 @@ import { getFilter } from './filters.js'
 import { drawCameraImage, isMirrored } from './mirror.js'
 
 // ── Overlay palette (wireframe, vertex markers, edge glow) ─────────
-// mint for lines/markers, magenta for accents. Colours only; widths,
-// shadowBlur and behaviour are unchanged.
+// mint for lines/markers, magenta for accents, ice / cobalt for the cat
+// whiskers filter. Colours only; widths, shadowBlur and behaviour unchanged.
 const MINT = '#9DFBD0'
 const MINT_RGB = '157, 251, 208'
 const MAGENTA = '#E02BC8'
 const MAGENTA_RGB = '224, 43, 200'
+const ICE = '#9EC0FF'
+const ICE_RGB = '158, 192, 255'
+const COBALT = '#4F6DFF'
+const COBALT_RGB = '79, 109, 255'
 
 // ── Pipeline singleton instances ────────────────────────────────────
 let shaderEngine = null
@@ -192,7 +196,7 @@ function renderEffect(ctx, source, quad, filter, intensity, bgImage, time, width
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
       ctx.fillRect(0, 0, width, height)
-      ctx.fillStyle = 'rgba(0, 243, 255, 0.3)'
+      ctx.fillStyle = `rgba(${ICE_RGB}, 0.55)`
       ctx.font = '20px "VT323", monospace'
       ctx.textAlign = 'center'
       const c = centroid(quad)
@@ -255,8 +259,8 @@ function renderCatWhiskers(ctx, quad, intensity, time) {
   ctx.lineTo(noseX - noseSize * 0.5, noseY + noseSize * 0.3)
   ctx.lineTo(noseX + noseSize * 0.5, noseY + noseSize * 0.3)
   ctx.closePath()
-  ctx.fillStyle = '#ff75c3'
-  ctx.shadowColor = '#ff75c3'
+  ctx.fillStyle = MAGENTA
+  ctx.shadowColor = MAGENTA
   ctx.shadowBlur = 10
   ctx.fill()
 
@@ -280,9 +284,9 @@ function renderCatWhiskers(ctx, quad, intensity, time) {
       ctx.quadraticCurveTo(cpX, cpY, endX, endY)
 
       const alpha = 0.6 + intensity * 0.4
-      ctx.strokeStyle = `rgba(0, 243, 255, ${alpha})`
+      ctx.strokeStyle = `rgba(${ICE_RGB}, ${alpha})`
       ctx.lineWidth = 2
-      ctx.shadowColor = '#00f3ff'
+      ctx.shadowColor = ICE
       ctx.shadowBlur = 8 + intensity * 6
       ctx.stroke()
     }
@@ -304,14 +308,14 @@ function drawCatEar(ctx, baseX, baseY, offsetX, offsetY, time, intensity) {
   ctx.lineTo(tipX, tipY)
   ctx.lineTo(baseX + innerOffset, baseY)
 
-  ctx.strokeStyle = `rgba(176, 38, 255, ${pulse * intensity})`
+  ctx.strokeStyle = `rgba(${COBALT_RGB}, ${pulse * intensity})`
   ctx.lineWidth = 2.5
-  ctx.shadowColor = '#b026ff'
+  ctx.shadowColor = COBALT
   ctx.shadowBlur = 12 + intensity * 8
   ctx.stroke()
 
   // Inner fill
-  ctx.fillStyle = `rgba(176, 38, 255, ${0.08 * intensity * pulse})`
+  ctx.fillStyle = `rgba(${COBALT_RGB}, ${0.08 * intensity * pulse})`
   ctx.fill()
 }
 

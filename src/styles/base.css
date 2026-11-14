@@ -27,15 +27,6 @@ img {
   max-width: 100%;
 }
 
-/* Screen-reader-only text */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 
 button, input, select, textarea {
   font: inherit;

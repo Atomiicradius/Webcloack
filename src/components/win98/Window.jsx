@@ -3,7 +3,7 @@ import { cx } from './cx.js'
 import './win98.css'
 
 /**
- * Window — Win98 window frame: navy title bar, body, optional status bar.
+ * Window — Win98 window frame: gradient title bar and body.
  *
  * `controls` holds REAL title-bar buttons (e.g. help). `decorativeControls`
  * draws inactive min/max/close glyphs that are aria-hidden and not focusable.
@@ -14,7 +14,6 @@ export function Window({
   icon = null,
   controls = null,
   decorativeControls = false,
-  statusBar = null,
   className,
   bodyClassName,
   children,
@@ -40,7 +39,6 @@ export function Window({
         )}
       </header>
       <div className={cx('w98-window__body', bodyClassName)}>{children}</div>
-      {statusBar && <footer className="w98-statusbar">{statusBar}</footer>}
     </section>
   )
 }

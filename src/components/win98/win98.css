@@ -22,14 +22,8 @@
     inset 2px 2px var(--win-dark);
 }
 
-.w98-etched {
-  border: 2px groove var(--win-light);
-}
-
 /* Shared focus ring: Win98 dotted rectangle */
-.w98-focus-ring:focus-visible,
-.w98-btn:focus-visible .w98-btn__inner,
-.w98-tool:focus-visible .w98-tool__inner {
+.w98-btn:focus-visible .w98-btn__inner {
   outline: 1px dotted var(--black);
   outline-offset: 1px;
 }
@@ -140,13 +134,6 @@
   min-height: 0;
 }
 
-.w98-statusbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  margin-top: 2px;
-}
-
 /* ── Button ──────────────────────────────────────────────────────── */
 .w98-btn {
   display: inline-flex;
@@ -205,101 +192,13 @@
   outline: 1px solid var(--black);
 }
 
-.w98-btn--block {
-  width: 100%;
-}
-
 .w98-btn:disabled {
   color: var(--win-shadow);
   text-shadow: 1px 1px 0 var(--white);
   cursor: default;
 }
 
-/* ── ToolButton ──────────────────────────────────────────────────── */
-.w98-tool {
-  position: relative;
-  display: inline-flex;
-  align-items: stretch;
-  justify-content: stretch;
-  min-width: 0;
-  min-height: 56px;
-  padding: 0;
-  border: 0;
-  color: var(--black);
-  font-family: var(--font-ui);
-  font-size: var(--text-ui-min);
-  line-height: 1;
-  text-align: left;
-  cursor: pointer;
-  background: var(--win-gray);
-  box-shadow:
-    inset -1px -1px var(--win-dark),
-    inset 1px 1px var(--white),
-    inset -2px -2px var(--win-shadow),
-    inset 2px 2px var(--win-light);
-}
-
-.w98-tool__inner {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 0;
-  padding: 6px 6px 4px;
-  text-align: center;
-}
-
-.w98-tool__icon {
-  display: inline-flex;
-}
-
-.w98-tool__label {
-  max-width: 100%;
-}
-
-.w98-tool__hint {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  color: var(--win-shadow);
-  font-size: var(--text-ui-min);
-  line-height: 1;
-}
-
-.w98-tool--row .w98-tool__inner {
-  flex-direction: row;
-  justify-content: flex-start;
-  gap: var(--space-2);
-  padding: 4px 10px;
-}
-
-.w98-tool:active,
-.w98-tool[aria-pressed='true'] {
-  background: var(--win-light);
-  box-shadow:
-    inset -1px -1px var(--white),
-    inset 1px 1px var(--win-dark),
-    inset -2px -2px var(--win-light),
-    inset 2px 2px var(--win-shadow);
-}
-
-.w98-tool:active .w98-tool__inner,
-.w98-tool[aria-pressed='true'] .w98-tool__inner {
-  transform: translate(1px, 1px);
-}
-
-.w98-tool:focus-visible {
-  outline: none;
-}
-
-.w98-tool:disabled {
-  color: var(--win-shadow);
-  cursor: default;
-}
-
-/* ── Panel / Groupbox / StatusField ──────────────────────────────── */
+/* ── Panel ─────────────────────────────────────────────────── */
 .w98-panel {
   padding: var(--space-2);
 }
@@ -319,49 +218,6 @@
     inset 1px 1px var(--win-shadow),
     inset -2px -2px var(--win-light),
     inset 2px 2px var(--win-dark);
-}
-
-.w98-panel--etched {
-  border: 2px groove var(--win-light);
-}
-
-.w98-panel--dark {
-  background: var(--black);
-  color: var(--mint);
-}
-
-.w98-group {
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-2) var(--space-2) var(--space-2);
-  border: 2px groove var(--win-light);
-}
-
-.w98-group__legend {
-  padding: 0 4px;
-  font-family: var(--font-ui);
-  font-size: var(--text-ui);
-}
-
-.w98-statusfield {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  min-height: 26px;
-  padding: 2px 8px;
-  font-size: var(--text-ui-min);
-  line-height: 1;
-  white-space: nowrap;
-  box-shadow:
-    inset -1px -1px var(--white),
-    inset 1px 1px var(--win-shadow);
-}
-
-.w98-statusfield--grow {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ── Slider ──────────────────────────────────────────────────────── */
@@ -483,21 +339,6 @@
   transform: rotate(45deg);
 }
 
-.w98-check--radio .w98-check__box {
-  border-radius: 50%;
-}
-
-.w98-check--radio .w98-check__input:checked + .w98-check__box::after {
-  top: 5px;
-  left: 5px;
-  width: 6px;
-  height: 6px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--black);
-  transform: none;
-}
-
 .w98-check__input:focus-visible ~ .w98-check__label {
   outline: 1px dotted var(--black);
   outline-offset: 1px;
@@ -585,7 +426,6 @@
 /* ── Touch: bigger hit targets ───────────────────────────────────── */
 @media (pointer: coarse) {
   .w98-btn,
-  .w98-tool,
   .w98-check,
   .w98-titlebar__btn {
     min-height: var(--hit-min);
