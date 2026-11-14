@@ -1,0 +1,21 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Landing placeholder support (src/pages/Landing.jsx is temporary and
+   intentionally untouched). These are the only legacy variables and the
+   one class it still references. Delete with the placeholder.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --cyan: #00f3ff;
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --font-body: var(--font-ui);
+  --font-mono: var(--font-ui);
+  --radius-md: 10px;
+}
+
+.app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #08090f;
+}

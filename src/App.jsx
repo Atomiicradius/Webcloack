@@ -1,7 +1,7 @@
 /**
  * App.jsx — Router shell only.
  * `/` is the landing page; `/app` is the camera app (lazy-loaded so the
- * landing route never downloads MediaPipe, framer-motion or the engine).
+ * landing route never downloads MediaPipe or the engine).
  */
 
 import { lazy, Suspense } from 'react'

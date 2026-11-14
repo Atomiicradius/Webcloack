@@ -1,0 +1,38 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Base: reset + document defaults (shared by every route)
+   ═══════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+/* Suspense fallback while the camera route chunk loads */
+.route-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--desktop-bg);
+  color: var(--mint);
+}
