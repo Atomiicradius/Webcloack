@@ -43,6 +43,14 @@ export function initPipeline(width, height) {
 }
 
 /**
+ * Shader keys that failed to compile/link (or all of them if WebGL is
+ * unavailable). Those filters render plain video.
+ */
+export function getShaderFailures() {
+  return shaderEngine ? [...shaderEngine.failedShaders] : []
+}
+
+/**
  * Render a single frame.
  */
 export function renderFrame(ctx, video, quads, config) {

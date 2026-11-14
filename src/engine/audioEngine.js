@@ -11,35 +11,50 @@ let freqArray = null
 let bufferLength = 0
 let audioGeneration = 0   // bumped by destroyAudio() to cancel an in-flight init
 
+let audioInitPromise = null
+
 /**
  * Initialize microphone input and create audio analysis pipeline.
+ * Resolves to { ok: true } or { ok: false, errorName }. On any failure the
+ * AudioContext is closed and all state reset, so a retry starts clean.
+ * errorName 'Cancelled' means destroyAudio() ran while initialising.
  */
-export async function initAudio() {
-  if (audioCtx) return true
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-    analyser = audioCtx.createAnalyser()
-    analyser.fftSize = 1024
-    analyser.smoothingTimeConstant = 0.8
-    bufferLength = analyser.frequencyBinCount
-    dataArray = new Uint8Array(bufferLength)
-    freqArray = new Uint8Array(bufferLength)
+export function initAudio() {
+  if (audioCtx && micStream) return Promise.resolve({ ok: true })
+  if (audioInitPromise) return audioInitPromise
 
-    const gen = audioGeneration
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    if (gen !== audioGeneration) {
-      // destroyAudio() ran while waiting for permission: don't leak the mic
-      stream.getTracks().forEach((t) => t.stop())
-      return false
+  const gen = audioGeneration
+  const promise = (async () => {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      analyser = audioCtx.createAnalyser()
+      analyser.fftSize = 1024
+      analyser.smoothingTimeConstant = 0.8
+      bufferLength = analyser.frequencyBinCount
+      dataArray = new Uint8Array(bufferLength)
+      freqArray = new Uint8Array(bufferLength)
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (gen !== audioGeneration) {
+        // destroyAudio() ran while waiting for permission: don't leak the mic
+        stream.getTracks().forEach((t) => t.stop())
+        return { ok: false, errorName: 'Cancelled' }
+      }
+      micStream = stream
+      const source = audioCtx.createMediaStreamSource(micStream)
+      source.connect(analyser)
+      return { ok: true }
+    } catch (e) {
+      console.warn('Audio init failed:', e)
+      if (gen === audioGeneration) destroyAudio() // full reset so a retry starts clean
+      return { ok: false, errorName: e?.name || 'Error' }
     }
-    micStream = stream
-    const source = audioCtx.createMediaStreamSource(micStream)
-    source.connect(analyser)
-    return true
-  } catch (e) {
-    console.warn('Audio init failed:', e)
-    return false
-  }
+  })()
+
+  audioInitPromise = promise
+  const clear = () => { if (audioInitPromise === promise) audioInitPromise = null }
+  promise.then(clear, clear)
+  return promise
 }
 
 /**
@@ -118,6 +133,7 @@ export function detectBeat(threshold = 0.6) {
  */
 export function destroyAudio() {
   audioGeneration++
+  audioInitPromise = null
   if (micStream) {
     micStream.getTracks().forEach((t) => t.stop())
     micStream = null

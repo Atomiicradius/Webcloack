@@ -13,7 +13,7 @@ import { useGestureDetector } from './hooks/useGestureDetector.js'
 import { useFPS } from './hooks/useFPS.js'
 
 // Engine
-import { initPipeline, destroyPipeline } from './engine/renderPipeline.js'
+import { initPipeline, destroyPipeline, getShaderFailures } from './engine/renderPipeline.js'
 import { FILTERS, getFilter } from './engine/filters.js'
 import { initAudio, destroyAudio } from './engine/audioEngine.js'
 import { live, ZERO_LEVELS } from './engine/liveState.js'
@@ -71,6 +71,8 @@ export default function CameraApp() {
   const {
     isLoading: isTrackingLoading,
     isInitialized: isTrackingReady,
+    error: trackingError,
+    retry: retryTracking,
     getQuads,
     getPinchData,
     getConfidence,
@@ -100,8 +102,16 @@ export default function CameraApp() {
     if (!isVideoReady) return
     const video = videoRef.current
     initPipeline(video?.videoWidth || 1280, video?.videoHeight || 720)
+
+    // One-time toast naming any filter whose shader failed to compile/link.
+    // Those filters fall back to plain video.
+    const failed = getShaderFailures()
+    if (failed.length > 0) {
+      const names = FILTERS.filter((f) => failed.includes(f.shaderKey)).map((f) => f.label)
+      showToast(`SHADER FAILED: ${names.join(', ')}`, 'error')
+    }
     return () => destroyPipeline()
-  }, [isVideoReady, videoRef])
+  }, [isVideoReady, videoRef, showToast])
 
   // ── Loading messages ───────────────────────────────────────────
   useEffect(() => {
@@ -246,10 +256,16 @@ export default function CameraApp() {
       setAudioLevels(ZERO_LEVELS)
       showToast('AUDIO DISABLED', 'info')
     } else {
-      const ok = await initAudio()
-      if (ok) {
+      const result = await initAudio()
+      if (result.ok) {
         setAudioEnabled(true)
         showToast('AUDIO REACTIVE ENABLED', 'success')
+      } else if (result.errorName === 'Cancelled') {
+        // torn down mid-request (e.g. navigated away); nothing to report
+      } else if (result.errorName === 'NotAllowedError') {
+        showToast('MICROPHONE ACCESS DENIED', 'error')
+      } else if (result.errorName === 'NotFoundError') {
+        showToast('NO MICROPHONE FOUND', 'error')
       } else {
         showToast('AUDIO INIT FAILED', 'error')
       }
@@ -365,6 +381,23 @@ export default function CameraApp() {
         audioEnabled={audioEnabled}
         canvasRef={canvasRef}
       />
+
+      {/* Non-blocking hand-tracking failure notice */}
+      {trackingError && !isLoading && (
+        <div
+          role="alert"
+          style={{
+            position: 'absolute', top: '72px', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 50, display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '8px 14px', background: 'var(--glass)',
+            border: '1px solid var(--red)', borderRadius: 'var(--radius-md)',
+            color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: '12px',
+          }}
+        >
+          <span>Hand tracking failed to load</span>
+          <button className="capture-btn" onClick={retryTracking}>Retry</button>
+        </div>
+      )}
 
       {/* CRT scanline overlay */}
       <div className="crt-overlay" />

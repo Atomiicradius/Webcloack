@@ -220,6 +220,14 @@ const KALEIDOSCOPE_FRAG = `
   }
 `
 
+// Shader programs compiled at init, keyed by filter shaderKey
+const SHADER_SOURCES = {
+  thermal: THERMAL_FRAG,
+  edge: EDGE_FRAG,
+  pixelate: PIXELATE_FRAG,
+  kaleidoscope: KALEIDOSCOPE_FRAG,
+}
+
 // ── Shader compilation helpers ─────────────────────────────────────
 
 function compileShader(gl, source, type) {
@@ -266,11 +274,16 @@ export class ShaderEngine {
     this.texBuffer = null
     this.initialized = false
     this.frameSource = null // source already uploaded this frame by beginFrame()
+    this.failedShaders = []  // shader keys that failed to compile/link
   }
 
   init(width, height) {
     const gl = this.gl
-    if (!gl) return
+    if (!gl) {
+      // No WebGL at all: every shader filter is unavailable
+      this.failedShaders = Object.keys(SHADER_SOURCES)
+      return
+    }
 
     this.canvas.width = width
     this.canvas.height = height
@@ -279,14 +292,8 @@ export class ShaderEngine {
     gl.getExtension('OES_standard_derivatives')
 
     // Compile all shader programs
-    const shaderSources = {
-      thermal: THERMAL_FRAG,
-      edge: EDGE_FRAG,
-      pixelate: PIXELATE_FRAG,
-      kaleidoscope: KALEIDOSCOPE_FRAG,
-    }
-
-    for (const [name, frag] of Object.entries(shaderSources)) {
+    this.failedShaders = []
+    for (const [name, frag] of Object.entries(SHADER_SOURCES)) {
       const program = createProgram(gl, VERT_SHADER, frag)
       if (program) {
         this.programs[name] = {
@@ -300,6 +307,8 @@ export class ShaderEngine {
             u_resolution: gl.getUniformLocation(program, 'u_resolution'),
           },
         }
+      } else {
+        this.failedShaders.push(name)
       }
     }
 

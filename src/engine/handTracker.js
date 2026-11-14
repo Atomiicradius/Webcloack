@@ -3,8 +3,13 @@
  * Initializes HandLandmarker and extracts quad ROI from 4 fingertips.
  */
 
+/* global __MEDIAPIPE_VERSION__ */
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 import { convexHull, sortQuadClockwise } from './convexHull.js'
+
+// WASM assets are fetched from the exact version of @mediapipe/tasks-vision
+// that is installed (injected by vite.config.js from node_modules).
+const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIAPIPE_VERSION__}/wasm`
 
 // Landmark indices
 export const LANDMARK = {
@@ -31,7 +36,7 @@ export function initHandLandmarker() {
   const gen = generation
   const promise = (async () => {
     const vision = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+      WASM_URL
     )
     const landmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {

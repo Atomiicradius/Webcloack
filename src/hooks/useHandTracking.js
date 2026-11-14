@@ -10,6 +10,8 @@ import { smoothPolygon } from '../engine/convexHull.js'
 export function useHandTracking(videoRef, isVideoReady) {
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)  // bumped by retry() to re-run init
   const quadsRef = useRef([])
   const pinchDataRef = useRef([])
   const confidenceRef = useRef(0)
@@ -32,6 +34,7 @@ export function useHandTracking(videoRef, isVideoReady) {
       } catch (e) {
         if (cancelled) return // superseded by cleanup (unmount / StrictMode)
         console.error('Hand tracking init error:', e)
+        setError(e?.message || 'Hand tracking failed to load')
         setIsLoading(false)
       }
     }
@@ -42,8 +45,9 @@ export function useHandTracking(videoRef, isVideoReady) {
       closeHandLandmarker()
       setIsInitialized(false)
       setIsLoading(true)
+      setError(null)
     }
-  }, [isVideoReady])
+  }, [isVideoReady, attempt])
 
   // Detection loop
   useEffect(() => {
@@ -99,6 +103,7 @@ export function useHandTracking(videoRef, isVideoReady) {
     }
   }, [isInitialized, isVideoReady, videoRef])
 
+  const retry = useCallback(() => setAttempt((a) => a + 1), [])
   const getQuads = useCallback(() => quadsRef.current, [])
   const getPinchData = useCallback(() => pinchDataRef.current, [])
   const getConfidenceValue = useCallback(() => confidenceRef.current, [])
@@ -107,6 +112,8 @@ export function useHandTracking(videoRef, isVideoReady) {
   return {
     isLoading,
     isInitialized,
+    error,
+    retry,
     getQuads,
     getPinchData,
     getConfidence: getConfidenceValue,
