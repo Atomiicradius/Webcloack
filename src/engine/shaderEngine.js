@@ -265,6 +265,7 @@ export class ShaderEngine {
     this.posBuffer = null
     this.texBuffer = null
     this.initialized = false
+    this.frameSource = null // source already uploaded this frame by beginFrame()
   }
 
   init(width, height) {
@@ -329,7 +330,26 @@ export class ShaderEngine {
   }
 
   /**
+   * Upload the source frame to the GPU once. Call before the per-quad
+   * render() calls; render() then skips its own upload for the same source.
+   */
+  beginFrame(source) {
+    const gl = this.gl
+    if (!gl || !this.initialized) return
+    gl.activeTexture(gl.TEXTURE0)
+    gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
+    this.frameSource = source
+  }
+
+  /** Forget the per-frame upload so a later render() uploads fresh data. */
+  endFrame() {
+    this.frameSource = null
+  }
+
+  /**
    * Render a shader effect on the given source (video or canvas).
+   * Uploads the source unless beginFrame() already did so for it.
    * @param {string} shaderName
    * @param {HTMLVideoElement|HTMLCanvasElement} source
    * @param {number} intensity — 0..1
@@ -352,10 +372,12 @@ export class ShaderEngine {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height)
     gl.useProgram(prog.program)
 
-    // Upload video texture
+    // Upload video texture (skipped when beginFrame() already uploaded it)
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
+    if (this.frameSource !== source) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
+    }
 
     // Set uniforms
     gl.uniform1i(prog.locations.u_image, 0)

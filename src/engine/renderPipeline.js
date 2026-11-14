@@ -60,6 +60,15 @@ export function renderFrame(ctx, video, quads, config) {
   // ── 1. Draw full video feed as background ────────────────────────
   ctx.drawImage(video, 0, 0, width, height)
 
+  // ── 1b. Once-per-frame work shared by every quad ─────────────────
+  const hasQuad = quads.some((q) => q && q.length >= 3)
+  const shaderKey = getFilter(filter)?.shaderKey
+  const usesShader = hasQuad && !!shaderKey && !!shaderEngine
+  if (usesShader) shaderEngine.beginFrame(video)
+  if (hasQuad && filter === 'matrix') {
+    prepareMatrix(video, intensity, width, height)
+  }
+
   // ── 2. Process each quad portal ──────────────────────────────────
   for (const quad of quads) {
     if (!quad || quad.length < 3) continue
@@ -100,11 +109,34 @@ export function renderFrame(ctx, video, quads, config) {
     drawVertexMarkers(ctx, sorted, audioLevels, time)
   }
 
+  if (usesShader) shaderEngine.endFrame()
+
   // ── 3. Update and render particles ───────────────────────────────
   if (particleSystem) {
     particleSystem.update()
     particleSystem.render(ctx)
   }
+}
+
+/**
+ * Advance and draw the matrix rain into its offscreen canvas — once per frame,
+ * regardless of how many quads are on screen.
+ */
+function prepareMatrix(video, intensity, width, height) {
+  if (!matrixRain) matrixRain = new MatrixRain()
+  if (!matrixCanvas) {
+    // initPipeline hasn't run (or destroyPipeline cleared it): create lazily
+    matrixCanvas = document.createElement('canvas')
+    matrixCanvas.width = width
+    matrixCanvas.height = height
+    matrixCtx = matrixCanvas.getContext('2d')
+  }
+  if (matrixCanvas.width !== width || matrixCanvas.height !== height) {
+    matrixCanvas.width = width
+    matrixCanvas.height = height
+    matrixRain.reset()
+  }
+  matrixRain.render(matrixCtx, video, width, height, intensity)
 }
 
 /**
@@ -124,21 +156,9 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
       ctx.fillText('CAPTURE BACKGROUND', c[0], c[1])
     }
   } else if (filter === 'matrix') {
-    if (!matrixRain) matrixRain = new MatrixRain()
-    if (!matrixCanvas) {
-      // initPipeline hasn't run (or destroyPipeline cleared it): create lazily
-      matrixCanvas = document.createElement('canvas')
-      matrixCanvas.width = width
-      matrixCanvas.height = height
-      matrixCtx = matrixCanvas.getContext('2d')
-    }
-    if (matrixCanvas.width !== width || matrixCanvas.height !== height) {
-      matrixCanvas.width = width
-      matrixCanvas.height = height
-      matrixRain.reset()
-    }
-    matrixRain.render(matrixCtx, video, width, height, intensity)
-    ctx.drawImage(matrixCanvas, 0, 0)
+    // The rain was advanced once for this frame by prepareMatrix(); each
+    // quad just draws the shared result inside its clip.
+    if (matrixCanvas) ctx.drawImage(matrixCanvas, 0, 0)
   } else if (filter === 'catwhiskers') {
     renderCatWhiskers(ctx, quad, intensity, time)
   } else {
