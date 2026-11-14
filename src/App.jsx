@@ -27,6 +27,15 @@ import LoadingScreen from './components/LoadingScreen.jsx'
 
 const UI_SYNC_INTERVAL_MS = 100
 
+// First supported WebM codec, best first; null when recording isn't available.
+function pickRecorderMimeType() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
+    return null
+  }
+  const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) || null
+}
+
 export default function App() {
   // ── State ──────────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState('cloak')
@@ -169,8 +178,9 @@ export default function App() {
   const toggleRecording = useCallback(() => {
     if (isRecording) {
       // Stop recording
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop()
+      const active = mediaRecorderRef.current
+      if (active && active.state !== 'inactive') {
+        active.stop()
       }
       setIsRecording(false)
       showToast('RECORDING STOPPED', 'info')
@@ -179,10 +189,21 @@ export default function App() {
       const canvas = canvasRef.current
       if (!canvas) return
 
-      const stream = canvas.captureStream(30)
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9',
-      })
+      const mimeType = pickRecorderMimeType()
+      if (!mimeType || typeof canvas.captureStream !== 'function') {
+        showToast('RECORDING NOT SUPPORTED', 'error')
+        return
+      }
+
+      let recorder
+      try {
+        const stream = canvas.captureStream(30)
+        recorder = new MediaRecorder(stream, { mimeType })
+      } catch (err) {
+        console.error('MediaRecorder init failed:', err)
+        showToast('RECORDING NOT SUPPORTED', 'error')
+        return
+      }
 
       recordedChunksRef.current = []
       recorder.ondataavailable = (e) => {
@@ -225,6 +246,18 @@ export default function App() {
     }
   }, [audioEnabled, showToast])
 
+  // ── Stop any active recording on unmount (without saving a file) ─
+  useEffect(() => {
+    return () => {
+      const recorder = mediaRecorderRef.current
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.onstop = null
+        recorder.stop()
+      }
+      mediaRecorderRef.current = null
+    }
+  }, [])
+
   // ── Stable handlers for memoized children ──────────────────────
   const handleFilterChange = useCallback((f) => {
     setActiveFilter(f)
@@ -242,7 +275,10 @@ export default function App() {
   // ── Keyboard shortcuts (defined after callbacks) ───────────────
   useEffect(() => {
     function handleKey(e) {
-      if (e.target.tagName === 'INPUT') return
+      // Leave browser/OS shortcuts (Ctrl+R, Ctrl+S, ...) alone
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const tag = e.target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
       switch (e.key) {
         case 'b':

@@ -11,6 +11,9 @@ import { renderFrame, getParticleSystem } from '../engine/renderPipeline.js'
 import { detectBeat, getAudioLevels } from '../engine/audioEngine.js'
 import { live, ZERO_LEVELS } from '../engine/liveState.js'
 
+// Distinct render-error messages already logged (log each once).
+const loggedErrors = new Set()
+
 function MagicCanvas({
   videoRef,
   getQuads,
@@ -75,15 +78,32 @@ function MagicCanvas({
         }
       }
 
-      // Render frame through the pipeline
-      renderFrame(ctx, video, quads, {
-        filter: p.filter,
-        intensity: live.intensity,
-        bgImage: p.bgImage,
-        showWireframe: p.showWireframe,
-        audioLevels,
-        time,
-      })
+      // Render frame through the pipeline. A throw must never stop the loop.
+      try {
+        renderFrame(ctx, video, quads, {
+          filter: p.filter,
+          intensity: live.intensity,
+          bgImage: p.bgImage,
+          showWireframe: p.showWireframe,
+          audioLevels,
+          time,
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        if (!loggedErrors.has(message)) {
+          loggedErrors.add(message)
+          console.error('Render error (further identical errors suppressed):', err)
+        }
+        // Reassigning width resets the 2D context (clip, save stack, styles)
+        // that the failed frame may have left in a bad state.
+        const w = canvas.width
+        canvas.width = w
+        try {
+          ctx.drawImage(video, 0, 0, w, canvas.height)
+        } catch {
+          // Video not drawable this frame; try again next frame.
+        }
+      }
     }
 
     rafId = requestAnimationFrame(renderLoop)

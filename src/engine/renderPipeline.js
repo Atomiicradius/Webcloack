@@ -125,6 +125,13 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
     }
   } else if (filter === 'matrix') {
     if (!matrixRain) matrixRain = new MatrixRain()
+    if (!matrixCanvas) {
+      // initPipeline hasn't run (or destroyPipeline cleared it): create lazily
+      matrixCanvas = document.createElement('canvas')
+      matrixCanvas.width = width
+      matrixCanvas.height = height
+      matrixCtx = matrixCanvas.getContext('2d')
+    }
     if (matrixCanvas.width !== width || matrixCanvas.height !== height) {
       matrixCanvas.width = width
       matrixCanvas.height = height
