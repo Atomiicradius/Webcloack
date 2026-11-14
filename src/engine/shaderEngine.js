@@ -412,5 +412,13 @@ export class ShaderEngine {
     if (this.texture) gl.deleteTexture(this.texture)
     if (this.posBuffer) gl.deleteBuffer(this.posBuffer)
     if (this.texBuffer) gl.deleteBuffer(this.texBuffer)
+    this.programs = {}
+    this.texture = null
+    this.posBuffer = null
+    this.texBuffer = null
+    this.frameSource = null
+    this.initialized = false
+    // Free the context now rather than waiting for GC (browsers cap live contexts)
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
   }
 }

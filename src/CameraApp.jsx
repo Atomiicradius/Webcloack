@@ -13,7 +13,7 @@ import { useGestureDetector } from './hooks/useGestureDetector.js'
 import { useFPS } from './hooks/useFPS.js'
 
 // Engine
-import { initPipeline } from './engine/renderPipeline.js'
+import { initPipeline, destroyPipeline } from './engine/renderPipeline.js'
 import { FILTERS, getFilter } from './engine/filters.js'
 import { initAudio, destroyAudio } from './engine/audioEngine.js'
 import { live, ZERO_LEVELS } from './engine/liveState.js'
@@ -56,7 +56,7 @@ export default function CameraApp() {
   const canvasRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const recordedChunksRef = useRef([])
-  const pipelineInitRef = useRef(false)
+  const toastTimersRef = useRef(new Set())
   const toastIdRef = useRef(0)
 
   // ── Hooks ──────────────────────────────────────────────────────
@@ -86,19 +86,21 @@ export default function CameraApp() {
   const showToast = useCallback((message, type = 'info') => {
     const id = ++toastIdRef.current
     setToasts([{ id, message, type }])
-    setTimeout(() => {
+    const timer = setTimeout(() => {
+      toastTimersRef.current.delete(timer)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 2500)
+    toastTimersRef.current.add(timer)
   }, [])
 
   // ── Initialize render pipeline ─────────────────────────────────
+  // Created when the camera becomes ready, destroyed when it stops or the
+  // component unmounts (initPipeline is itself idempotent).
   useEffect(() => {
-    if (isVideoReady && videoRef.current && !pipelineInitRef.current) {
-      const w = videoRef.current.videoWidth || 1280
-      const h = videoRef.current.videoHeight || 720
-      initPipeline(w, h)
-      pipelineInitRef.current = true
-    }
+    if (!isVideoReady) return
+    const video = videoRef.current
+    initPipeline(video?.videoWidth || 1280, video?.videoHeight || 720)
+    return () => destroyPipeline()
   }, [isVideoReady, videoRef])
 
   // ── Loading messages ───────────────────────────────────────────
@@ -254,15 +256,22 @@ export default function CameraApp() {
     }
   }, [audioEnabled, showToast])
 
-  // ── Stop any active recording on unmount (without saving a file) ─
+  // ── Unmount cleanup: recorder, microphone, toast timers ────────
+  // (camera stream, RAF loops, landmarker and pipeline are released by their
+  // own hooks/effects.) Safe under StrictMode's mount → unmount → mount.
   useEffect(() => {
+    const timers = toastTimersRef.current
     return () => {
       const recorder = mediaRecorderRef.current
       if (recorder && recorder.state !== 'inactive') {
-        recorder.onstop = null
+        recorder.onstop = null // don't trigger a download on teardown
         recorder.stop()
       }
+      recorder?.stream?.getTracks().forEach((t) => t.stop())
       mediaRecorderRef.current = null
+      destroyAudio()
+      timers.forEach(clearTimeout)
+      timers.clear()
     }
   }, [])
 

@@ -15,27 +15,64 @@ export const LANDMARK = {
 }
 
 let handLandmarker = null
+let initPromise = null
+let generation = 0   // bumped by closeHandLandmarker() to cancel in-flight inits
 
 /**
  * Initialize MediaPipe HandLandmarker with GPU acceleration.
+ * Idempotent: concurrent/repeated calls share one landmarker. If
+ * closeHandLandmarker() is called while init is in flight, the landmarker
+ * that finishes loading is closed immediately and the promise rejects.
  */
-export async function initHandLandmarker() {
-  const vision = await FilesetResolver.forVisionTasks(
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-  )
-  handLandmarker = await HandLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath:
-        'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-      delegate: 'GPU',
-    },
-    runningMode: 'VIDEO',
-    numHands: 4,
-    minHandDetectionConfidence: 0.5,
-    minHandPresenceConfidence: 0.5,
-    minTrackingConfidence: 0.5,
-  })
-  return handLandmarker
+export function initHandLandmarker() {
+  if (handLandmarker) return Promise.resolve(handLandmarker)
+  if (initPromise) return initPromise
+
+  const gen = generation
+  const promise = (async () => {
+    const vision = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+    )
+    const landmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath:
+          'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate: 'GPU',
+      },
+      runningMode: 'VIDEO',
+      numHands: 4,
+      minHandDetectionConfidence: 0.5,
+      minHandPresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    })
+    if (gen !== generation) {
+      landmarker.close()
+      throw new Error('Hand landmarker init cancelled')
+    }
+    handLandmarker = landmarker
+    return landmarker
+  })()
+
+  initPromise = promise
+  const clear = () => { if (initPromise === promise) initPromise = null }
+  promise.then(clear, clear)
+  return promise
+}
+
+/**
+ * Close the landmarker and reset the module singleton so it can be re-created.
+ */
+export function closeHandLandmarker() {
+  generation++
+  initPromise = null
+  if (handLandmarker) {
+    try {
+      handLandmarker.close()
+    } catch (e) {
+      console.warn('HandLandmarker close error:', e)
+    }
+    handLandmarker = null
+  }
 }
 
 /**

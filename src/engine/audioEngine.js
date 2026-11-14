@@ -9,6 +9,7 @@ let micStream = null
 let dataArray = null
 let freqArray = null
 let bufferLength = 0
+let audioGeneration = 0   // bumped by destroyAudio() to cancel an in-flight init
 
 /**
  * Initialize microphone input and create audio analysis pipeline.
@@ -24,7 +25,14 @@ export async function initAudio() {
     dataArray = new Uint8Array(bufferLength)
     freqArray = new Uint8Array(bufferLength)
 
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const gen = audioGeneration
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    if (gen !== audioGeneration) {
+      // destroyAudio() ran while waiting for permission: don't leak the mic
+      stream.getTracks().forEach((t) => t.stop())
+      return false
+    }
+    micStream = stream
     const source = audioCtx.createMediaStreamSource(micStream)
     source.connect(analyser)
     return true
@@ -109,6 +117,7 @@ export function detectBeat(threshold = 0.6) {
  * Cleanup audio resources.
  */
 export function destroyAudio() {
+  audioGeneration++
   if (micStream) {
     micStream.getTracks().forEach((t) => t.stop())
     micStream = null

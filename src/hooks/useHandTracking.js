@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { initHandLandmarker, detectHands, extractQuads, extractPinchData, getConfidence } from '../engine/handTracker.js'
+import { initHandLandmarker, closeHandLandmarker, detectHands, extractQuads, extractPinchData, getConfidence } from '../engine/handTracker.js'
 import { smoothPolygon } from '../engine/convexHull.js'
 
 export function useHandTracking(videoRef, isVideoReady) {
@@ -30,13 +30,19 @@ export function useHandTracking(videoRef, isVideoReady) {
           setIsLoading(false)
         }
       } catch (e) {
+        if (cancelled) return // superseded by cleanup (unmount / StrictMode)
         console.error('Hand tracking init error:', e)
-        if (!cancelled) setIsLoading(false)
+        setIsLoading(false)
       }
     }
 
     setup()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      closeHandLandmarker()
+      setIsInitialized(false)
+      setIsLoading(true)
+    }
   }, [isVideoReady])
 
   // Detection loop
@@ -85,6 +91,11 @@ export function useHandTracking(videoRef, isVideoReady) {
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      quadsRef.current = []
+      prevQuadsRef.current = []
+      pinchDataRef.current = []
+      confidenceRef.current = 0
+      handsCountRef.current = 0
     }
   }, [isInitialized, isVideoReady, videoRef])
 

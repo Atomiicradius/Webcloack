@@ -29,6 +29,7 @@ export function getParticleSystem() {
  * Initialize the render pipeline.
  */
 export function initPipeline(width, height) {
+  destroyPipeline() // idempotent: never leave a previous pipeline's resources behind
   shaderEngine = new ShaderEngine()
   shaderEngine.init(width, height)
 
@@ -447,6 +448,8 @@ export function destroyPipeline() {
     matrixRain.reset()
     matrixRain = null
   }
+  matrixCanvas = null
+  matrixCtx = null
   if (particleSystem) {
     particleSystem.clear()
     particleSystem = null
