@@ -4,6 +4,9 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
 
 // Hooks
 import { useWebcam } from './hooks/useWebcam.js'
@@ -20,8 +23,7 @@ import { setMirror } from './engine/mirror.js'
 
 // Components
 import MagicCanvas from './components/MagicCanvas.jsx'
-import LoadingScreen from './components/LoadingScreen.jsx'
-import CameraGate from './components/CameraGate.jsx'
+import BootScreen from './components/boot/BootScreen.jsx'
 import { AppIcon, StatusField, TitleBarButton, ToolButton, Window } from './components/win98/index.js'
 import FilterTools from './components/app/FilterTools.jsx'
 import SidePanel from './components/app/SidePanel.jsx'
@@ -34,7 +36,10 @@ import PausedOverlay from './components/app/PausedOverlay.jsx'
 import { IconCamera } from './components/Icons.jsx'
 import './components/app/app.css'
 
+gsap.registerPlugin(useGSAP)
+
 const UI_SYNC_INTERVAL_MS = 100
+const BOOT_MIN_MS = 1200 // boot dialog never flashes by faster than this
 const MIRROR_KEY = 'webcloak.mirror'
 
 // Selfie mirror preference; defaults to on. Storage may be unavailable.
@@ -83,6 +88,15 @@ export default function CameraApp() {
   const [helpOpen, setHelpOpen] = useState(false)
   const [autoPaused, setAutoPaused] = useState(false)
   const [mirror, setMirrorState] = useState(readMirrorPref)
+  // Boot: requested by a user action (landing "launch" or the start button)
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Arrived via the landing page's launch button (that click is the action)
+  const [launched] = useState(() => Boolean(location.state?.launch))
+  const [bootRequested, setBootRequested] = useState(launched)
+  const [minElapsed, setMinElapsed] = useState(false)
+  const [pipelineInfo, setPipelineInfo] = useState({ ready: false, failed: 0 })
+  const [bootDone, setBootDone] = useState(false)
 
   // ── Refs ───────────────────────────────────────────────────────
   const canvasRef = useRef(null)
@@ -94,6 +108,9 @@ export default function CameraApp() {
   const helpOpenRef = useRef(false)
   const autoPausedRef = useRef(false)   // paused by tab visibility, not by the user
   const cameraStatusRef = useRef('idle')
+  const rootRef = useRef(null)
+  const overlayOpenRef = useRef(true)
+  const launchedRef = useRef(launched)
 
   // ── Hooks ──────────────────────────────────────────────────────
   const {
@@ -108,7 +125,6 @@ export default function CameraApp() {
     pause: pauseWebcam,
   } = useWebcam()
   const {
-    isLoading: isTrackingLoading,
     isInitialized: isTrackingReady,
     error: trackingError,
     retry: retryTracking,
@@ -116,14 +132,11 @@ export default function CameraApp() {
     getPinchData,
     getConfidence,
     getHandsCount,
-  } = useHandTracking(videoRef, { enabled: sessionLive, running: isVideoReady })
+  } = useHandTracking(videoRef, { enabled: bootRequested, running: isVideoReady })
   const { processGestures } = useGestureDetector()
   const fps = useFPS(isVideoReady)
 
   // ── Computed ───────────────────────────────────────────────────
-  const showApp = cameraStatus === 'starting' || cameraStatus === 'ready' || cameraStatus === 'paused'
-  // Full loading screen only for the first start; resumes show an in-viewport notice
-  const isLoading = showApp && (!sessionLive || isTrackingLoading)
   // Engines stay alive but every loop stops while paused or re-acquiring
   const isHalted = sessionLive && !isVideoReady
   const filterDef = getFilter(activeFilter)
@@ -138,6 +151,32 @@ export default function CameraApp() {
     }, 2500)
     toastTimersRef.current.add(timer)
   }, [])
+
+  const reportPipeline = useCallback((info) => setPipelineInfo(info), [])
+
+  // ── Boot: start the camera (and, in parallel, the hand model) ──
+  const requestStart = useCallback(() => {
+    setBootRequested(true)
+    startCamera()
+  }, [startCamera])
+
+  // Arrived from the landing launch button: that click is the user action.
+  // Consume the flag so a reload does not start the camera on its own.
+  // (StrictMode re-runs this; the second start() supersedes the first.)
+  useEffect(() => {
+    if (!launchedRef.current) return
+    navigate(location.pathname, { replace: true, state: null })
+    startCamera()
+  }, [navigate, location.pathname, startCamera])
+
+  // Minimum boot display time (never fakes progress, only delays the exit)
+  useEffect(() => {
+    if (!bootRequested) return
+    const t = setTimeout(() => setMinElapsed(true), BOOT_MIN_MS)
+    return () => clearTimeout(t)
+  }, [bootRequested])
+
+  const exitToLanding = useCallback(() => navigate('/'), [navigate])
 
   // ── Initialize render pipeline ─────────────────────────────────
   // Created when the camera session starts, kept through pauses, destroyed
@@ -154,8 +193,12 @@ export default function CameraApp() {
       const names = FILTERS.filter((f) => failed.includes(f.shaderKey)).map((f) => f.label.toLowerCase())
       showToast(`shader failed: ${names.join(', ')}`, 'error')
     }
-    return () => destroyPipeline()
-  }, [sessionLive, videoRef, showToast])
+    reportPipeline({ ready: true, failed: failed.length })
+    return () => {
+      destroyPipeline()
+      reportPipeline({ ready: false, failed: 0 })
+    }
+  }, [sessionLive, videoRef, showToast, reportPipeline])
 
   // ── Mirror: push to the engine and persist ─────────────────────
   useEffect(() => {
@@ -422,8 +465,8 @@ export default function CameraApp() {
       if (e.ctrlKey || e.metaKey || e.altKey) return
       const tag = e.target?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-      // The help dialog handles its own keys
-      if (helpOpenRef.current) return
+      // The help dialog handles its own keys; the boot overlay owns the screen
+      if (helpOpenRef.current || overlayOpenRef.current) return
 
       switch (e.key) {
         case 'b':
@@ -472,6 +515,72 @@ export default function CameraApp() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio, toggleCamera])
 
+  // ── Boot tasks (real states only) ──────────────────────────────
+  const modelState = !bootRequested ? 'pending' : trackingError ? 'fail' : isTrackingReady ? 'ok' : 'active'
+  const cameraState = !bootRequested ? 'pending' : sessionLive ? 'ok' : cameraStatus === 'error' ? 'fail' : 'active'
+  const shaderState = !sessionLive ? 'pending' : pipelineInfo.ready ? 'ok' : 'active'
+  const frameState = !pipelineInfo.ready ? 'pending' : isVideoReady ? 'ok' : 'active'
+  const bootLines = [
+    {
+      id: 'model',
+      label: 'loading hand model',
+      state: modelState,
+      detail: modelState === 'active' ? 'loading' : modelState === 'fail' ? 'failed (filters still work)' : undefined,
+    },
+    {
+      id: 'camera',
+      label: 'requesting camera permission',
+      state: cameraState,
+      detail: cameraState === 'fail' ? 'denied' : undefined,
+    },
+    {
+      id: 'shaders',
+      label: 'compiling shaders',
+      state: shaderState,
+      detail: shaderState === 'ok' && pipelineInfo.failed > 0 ? `ok (${pipelineInfo.failed} failed)` : undefined,
+    },
+    { id: 'frame', label: 'camera ready', state: frameState },
+  ]
+  const bootProgress = bootLines.filter((l) => l.state === 'ok' || l.state === 'fail').length
+  const bootReady = bootRequested && (isTrackingReady || Boolean(trackingError))
+    && pipelineInfo.ready && isVideoReady && minElapsed
+  const bootPhase = cameraStatus === 'error' ? 'error' : bootRequested ? 'boot' : 'idle'
+  const overlayOpen = !bootDone || cameraStatus === 'error'
+
+  useEffect(() => {
+    overlayOpenRef.current = overlayOpen
+  }, [overlayOpen])
+
+  // Boot dialog entrance (white flash fades out when coming from launch)
+  useGSAP(() => {
+    const mm = gsap.matchMedia()
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      if (launchedRef.current) {
+        gsap.fromTo('.bt-flash', { opacity: 1 }, { opacity: 0, duration: 0.7, ease: 'power2.out' })
+        gsap.from('.bt-globe', { scale: 2.6, duration: 1, ease: 'power3.out' })
+      }
+      gsap.from('.bt-dialog', { scale: 0.7, opacity: 0, duration: 0.45, ease: 'back.out(1.7)', delay: 0.15 })
+    }, rootRef.current)
+    return () => mm.revert()
+  }, { scope: rootRef })
+
+  // Boot exit: dialog collapses, then the app frames slide and scale in
+  useGSAP(() => {
+    if (!bootReady || bootDone) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setBootDone(true)
+      return
+    }
+    const tl = gsap.timeline({ onComplete: () => setBootDone(true) })
+    tl.to('.bt-dialog', { scaleY: 0.03, duration: 0.22, ease: 'power2.in' })
+      .to('.bt-dialog', { scaleX: 0, opacity: 0, duration: 0.16, ease: 'power2.in' })
+      .to('.bt-globe', { scale: 1.8, opacity: 0, duration: 0.45, ease: 'power2.in' }, 0)
+      .to('.bt', { opacity: 0, duration: 0.3, ease: 'none' }, 0.3)
+      .from('[data-boot-in]', {
+        opacity: 0, y: 48, scale: 0.92, duration: 0.6, stagger: 0.08, ease: 'back.out(1.5)', clearProps: 'transform,opacity',
+      }, 0.35)
+  }, { dependencies: [bootReady, bootDone], scope: rootRef })
+
   const aspect = resolution.w > 0 && resolution.h > 0 ? `${resolution.w} / ${resolution.h}` : '16 / 9'
 
   let statusMessage = 'ready'
@@ -482,18 +591,14 @@ export default function CameraApp() {
   else if (handsCount < 2) statusMessage = 'show both hands to open a portal'
 
   return (
-    <div className="wc-desktop">
+    <div className="wc-desktop" ref={rootRef}>
       {/* Hidden source video */}
       <video ref={videoRef} className="wc-video" autoPlay playsInline muted />
 
       <main className="wc-main">
-        {/* Start / error screen (nothing camera-related runs until Start) */}
-        {!showApp && (
-          <CameraGate status={cameraStatus} error={webcamError} onStart={startCamera} />
-        )}
-
-        {showApp && (
+        {(
           <Window
+            data-boot-in
             className="wc-window"
             title="webcloak.exe - live"
             titleAs="h1"
@@ -534,7 +639,7 @@ export default function CameraApp() {
 
               <div className="wc-stage">
                 {/* Non-blocking hand-tracking failure notice */}
-                {trackingError && !isLoading && <TrackingBanner onRetry={retryTracking} />}
+                {trackingError && bootDone && <TrackingBanner onRetry={retryTracking} />}
 
                 <div className="wc-viewport w98-sunken">
                   <div className="wc-viewport__screen" style={{ '--cam-aspect': aspect }}>
@@ -545,7 +650,7 @@ export default function CameraApp() {
                       bgImage={bgImage}
                       showWireframe={showWireframe}
                       audioEnabled={audioEnabled}
-                      paused={isHalted}
+                      paused={!isVideoReady}
                       canvasRef={canvasRef}
                     />
                     <ViewportHud
@@ -554,7 +659,7 @@ export default function CameraApp() {
                       handsCount={handsCount}
                       filter={filterDef}
                     />
-                    {isHalted && !isLoading && (
+                    {isHalted && bootDone && (
                       <PausedOverlay
                         resuming={cameraStatus === 'starting'}
                         autoPaused={autoPaused}
@@ -589,13 +694,16 @@ export default function CameraApp() {
         )}
       </main>
 
-      {/* Loading screen */}
-      {showApp && (
-        <LoadingScreen
-          visible={isLoading}
-          cameraReady={sessionLive}
-          trackingReady={isTrackingReady}
-          trackingFailed={Boolean(trackingError)}
+      {/* Boot dialog (and camera errors, in the same style) */}
+      {overlayOpen && (
+        <BootScreen
+          phase={bootPhase}
+          lines={bootLines}
+          progress={bootProgress}
+          error={webcamError}
+          onStart={requestStart}
+          onRetry={requestStart}
+          onCancel={exitToLanding}
         />
       )}
 
