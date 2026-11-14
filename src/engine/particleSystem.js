@@ -3,6 +3,10 @@
  * Emits particles at polygon vertices on audio beats for reactive HUD effects.
  */
 
+// Palette: mint sparks, magenta accents along edges (colours only)
+const PARTICLE_MINT = '157, 251, 208'
+const PARTICLE_MAGENTA = '224, 43, 200'
+
 export class ParticleSystem {
   constructor() {
     this.particles = []
@@ -16,7 +20,7 @@ export class ParticleSystem {
     for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
       const angle = Math.random() * Math.PI * 2
       const speed = 1 + Math.random() * 4
-      const hue = color || (180 + Math.random() * 60) // cyan-to-purple range
+      const rgb = color || PARTICLE_MINT
       this.particles.push({
         x,
         y,
@@ -25,7 +29,7 @@ export class ParticleSystem {
         life: 1.0,
         decay: 0.01 + Math.random() * 0.03,
         size: 1 + Math.random() * 3,
-        hue,
+        rgb,
       })
     }
   }
@@ -41,7 +45,7 @@ export class ParticleSystem {
       const t = Math.random()
       const x = points[idx][0] + (points[next][0] - points[idx][0]) * t
       const y = points[idx][1] + (points[next][1] - points[idx][1]) * t
-      this.emit(x, y, 2, 190 + Math.random() * 40)
+      this.emit(x, y, 2, PARTICLE_MAGENTA)
     }
   }
 
@@ -76,14 +80,14 @@ export class ParticleSystem {
       const size = p.size * p.life
       ctx.beginPath()
       ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
-      ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${alpha})`
+      ctx.fillStyle = `rgba(${p.rgb}, ${alpha})`
       ctx.fill()
 
       // Glow
       if (size > 1.5) {
         ctx.beginPath()
         ctx.arc(p.x, p.y, size * 2.5, 0, Math.PI * 2)
-        ctx.fillStyle = `hsla(${p.hue}, 100%, 60%, ${alpha * 0.2})`
+        ctx.fillStyle = `rgba(${p.rgb}, ${alpha * 0.2})`
         ctx.fill()
       }
     }

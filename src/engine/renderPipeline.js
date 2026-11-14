@@ -11,6 +11,14 @@ import { ParticleSystem } from './particleSystem.js'
 import { getTimeDomainData } from './audioEngine.js'
 import { getFilter } from './filters.js'
 
+// ── Overlay palette (wireframe, vertex markers, edge glow) ─────────
+// mint for lines/markers, magenta for accents. Colours only; widths,
+// shadowBlur and behaviour are unchanged.
+const MINT = '#9DFBD0'
+const MINT_RGB = '157, 251, 208'
+const MAGENTA = '#E02BC8'
+const MAGENTA_RGB = '224, 43, 200'
+
 // ── Pipeline singleton instances ────────────────────────────────────
 let shaderEngine = null
 let matrixRain = null
@@ -347,17 +355,17 @@ function drawVibratingWireframe(ctx, points, audioLevels, time) {
     const glowBlur = hasAudio ? (6 + audioLevels.bass * 20) : 4
 
     // Primary laser line
-    ctx.strokeStyle = `hsla(190, 100%, 70%, ${glowAlpha})`
+    ctx.strokeStyle = `rgba(${MINT_RGB}, ${glowAlpha})`
     ctx.lineWidth = hasAudio ? (1.5 + audioLevels.bass * 2) : 1.2
-    ctx.shadowColor = '#00f3ff'
+    ctx.shadowColor = MINT
     ctx.shadowBlur = glowBlur
     ctx.stroke()
 
     // Secondary purple ghost line (slight offset)
     if (hasAudio && audioLevels.amplitude > 0.05) {
-      ctx.strokeStyle = `hsla(280, 100%, 60%, ${glowAlpha * 0.4})`
+      ctx.strokeStyle = `rgba(${MAGENTA_RGB}, ${glowAlpha * 0.4})`
       ctx.lineWidth = 0.8
-      ctx.shadowColor = '#b026ff'
+      ctx.shadowColor = MAGENTA
       ctx.shadowBlur = glowBlur * 0.5
       ctx.stroke()
     }
@@ -368,9 +376,9 @@ function drawVibratingWireframe(ctx, points, audioLevels, time) {
     const dashOffset = (time * 40) % 20
     ctx.setLineDash([3, 8])
     ctx.lineDashOffset = -dashOffset
-    ctx.strokeStyle = `hsla(280, 100%, 70%, ${0.15 + audioLevels.treble * 0.2})`
+    ctx.strokeStyle = `rgba(${MAGENTA_RGB}, ${0.15 + audioLevels.treble * 0.2})`
     ctx.lineWidth = 0.5
-    ctx.shadowColor = '#b026ff'
+    ctx.shadowColor = MAGENTA
     ctx.shadowBlur = 4
 
     ctx.beginPath()
@@ -394,9 +402,9 @@ function drawFeatheredEdge(ctx, inner, outer, audioLevels) {
   ctx.save()
   ctx.globalCompositeOperation = 'lighter'
 
-  ctx.shadowColor = `hsla(190, 100%, 60%, ${0.3 + audioLevels.amplitude * 0.5})`
+  ctx.shadowColor = `rgba(${MINT_RGB}, ${0.3 + audioLevels.amplitude * 0.5})`
   ctx.shadowBlur = glow
-  ctx.strokeStyle = `hsla(190, 100%, 70%, ${0.15 + audioLevels.bass * 0.3})`
+  ctx.strokeStyle = `rgba(${MINT_RGB}, ${0.15 + audioLevels.bass * 0.3})`
   ctx.lineWidth = 2 + audioLevels.bass * 4
 
   ctx.beginPath()
@@ -423,20 +431,20 @@ function drawVertexMarkers(ctx, points, audioLevels, time) {
     const radius = 4 + audioLevels.bass * 6 + pulse * 2
 
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 3)
-    gradient.addColorStop(0, `hsla(190, 100%, 70%, ${0.6 * pulse})`)
-    gradient.addColorStop(0.5, `hsla(190, 100%, 60%, ${0.2 * pulse})`)
-    gradient.addColorStop(1, 'hsla(190, 100%, 50%, 0)')
+    gradient.addColorStop(0, `rgba(${MINT_RGB}, ${0.6 * pulse})`)
+    gradient.addColorStop(0.5, `rgba(${MINT_RGB}, ${0.2 * pulse})`)
+    gradient.addColorStop(1, `rgba(${MINT_RGB}, 0)`)
     ctx.fillStyle = gradient
     ctx.fillRect(x - radius * 3, y - radius * 3, radius * 6, radius * 6)
 
     ctx.beginPath()
     ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2)
-    ctx.fillStyle = `hsla(190, 100%, 85%, ${0.8 * pulse})`
+    ctx.fillStyle = `rgba(${MINT_RGB}, ${0.8 * pulse})`
     ctx.fill()
 
     ctx.beginPath()
     ctx.arc(x, y, radius, 0, Math.PI * 2)
-    ctx.strokeStyle = `hsla(190, 100%, 70%, ${0.4 * pulse})`
+    ctx.strokeStyle = `rgba(${MAGENTA_RGB}, ${0.4 * pulse})`
     ctx.lineWidth = 1
     ctx.stroke()
   }
