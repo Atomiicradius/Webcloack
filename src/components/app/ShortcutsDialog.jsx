@@ -26,17 +26,17 @@ export default function ShortcutsDialog({ shortcuts, onClose }) {
   }
 
   return (
-    <div className="wc-modal" onKeyDown={handleKeyDown}>
+    <div className="ap-modal" onKeyDown={handleKeyDown}>
       <MessageBox
         role="dialog"
         title="keyboard shortcuts"
         icon={<InfoIcon />}
         buttons={<Button ref={closeRef} variant="default" onClick={onClose}>close</Button>}
       >
-        <dl className="wc-shortcuts w98-sunken">
+        <dl className="ap-shortcuts w98-sunken">
           {shortcuts.map(([keys, action]) => (
             <div key={keys} style={{ display: 'contents' }}>
-              <dt><kbd className="wc-kbd">{keys}</kbd></dt>
+              <dt><kbd className="ap-kbd">{keys}</kbd></dt>
               <dd>{action}</dd>
             </div>
           ))}

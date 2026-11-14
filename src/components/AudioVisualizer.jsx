@@ -49,7 +49,7 @@ function AudioVisualizer({ audioLevels, visible }) {
 
   if (!visible) {
     return (
-      <div className="wc-audio">
+      <div className="ap-audio">
         <span>mic off</span>
         <span>tick audio reactive to start</span>
       </div>
@@ -58,8 +58,8 @@ function AudioVisualizer({ audioLevels, visible }) {
 
   const pct = (v) => Math.round(v * 100)
   return (
-    <div className="wc-audio">
-      <canvas ref={canvasRef} width={200} height={64} className="wc-audio__canvas" aria-hidden="true" />
+    <div className="ap-audio">
+      <canvas ref={canvasRef} width={200} height={64} className="ap-audio__canvas" aria-hidden="true" />
       <span>
         bass {pct(audioLevels.bass)} mid {pct(audioLevels.mid)} treble {pct(audioLevels.treble)}
       </span>

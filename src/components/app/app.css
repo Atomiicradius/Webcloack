@@ -1,23 +1,28 @@
 /* ═══════════════════════════════════════════════════════════════════
-   CAMERA APP LAYOUT — classes prefixed wc-
-   Built on the Win98 kit (w98-*). Flat colours, hard bevels only.
+   CAMERA APP — blue chrome. Classes prefixed ap-
+   Stacking rule: the PNG assets (logo, orbit star, gel orbs) are
+   screen-blended (.ch-screen). Keep .ap-scene, .ap-layout, .ap-top,
+   .ap-main and .ap-dock free of z-index / transform / opacity / filter so
+   the blend reaches the .ap background. Animate the blended elements
+   themselves (they carry data-boot-in) instead of their containers.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Desktop ─────────────────────────────────────────────────────── */
-.wc-desktop {
+.ap {
+  --side-w: clamp(320px, 24vw, 380px);
+  --pad-x: clamp(16px, 2.8vw, 48px);
+  --top-h: 76px;
+  --orb: 70px;
   position: fixed;
   inset: 0;
-  display: flex;
-  overflow: auto;
-  padding: var(--space-5) var(--space-4) calc(var(--taskbar-h) + var(--space-5));
-  background: var(--desktop-bg);
-  color: var(--black);
+  overflow: hidden;
+  background: var(--bg-radial);
+  color: var(--white);
   font-family: var(--font-ui);
   font-size: var(--text-ui);
 }
 
 /* Hidden source video for the canvas pipeline */
-.wc-video {
+.ap-video {
   position: absolute;
   top: 0;
   left: 0;
@@ -27,75 +32,241 @@
   pointer-events: none;
 }
 
-/* Centres whatever the desktop shows (window or dialog), safe on overflow */
-.wc-main {
+/* ── Backdrop decor ──────────────────────────────────────────────── */
+.ap-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ap-scene__floor {
+  position: absolute;
+  right: 0;
+  bottom: var(--ticker-h);
+  left: 0;
+  height: 30%;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%);
+  mask-image: linear-gradient(180deg, transparent, #000 40%);
+}
+
+.ap-scene__globe {
+  position: absolute;
+  top: 16%;
+  right: -60px;
+  width: min(540px, 40vw);
+  opacity: 0.5;
+}
+
+.ap-scene__orbit {
+  position: absolute;
+  top: -40px;
+  right: 8px;
+  width: min(280px, 22vw);
+}
+
+.ap-scene__orbit img {
+  animation: ap-spin 70s linear infinite;
+}
+
+.ap-scene__spark {
+  position: absolute;
+}
+
+.ap-scene__ticker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+@keyframes ap-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+.ap-layout {
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--top-h) minmax(0, 1fr);
+  height: 100%;
+  padding: 0 var(--pad-x) calc(var(--ticker-h) + 14px);
+}
+
+.ap-top {
+  position: relative;
   display: flex;
-  flex: 1 1 auto;
   align-items: center;
-  justify-content: center;
-  min-width: 0;
+  gap: 20px;
+  padding-left: clamp(200px, 17vw, 260px);
 }
 
-/* ── Main window ─────────────────────────────────────────────────── */
-.wc-window {
-  width: 100%;
-  max-width: 1120px;
-  margin: auto;
+.ap-logo {
+  position: absolute;
+  top: -6px;
+  left: -12px;
+  width: clamp(200px, 17vw, 250px);
 }
 
-.wc-body {
+.ap-main {
+  position: relative;
   display: grid;
-  grid-template-areas: 'tools stage panel';
-  grid-template-columns: 216px minmax(0, 1fr) 230px;
-  align-items: start;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) var(--side-w);
+  gap: clamp(20px, 2.2vw, 36px);
+  min-height: 0;
 }
 
-/* ── Filter tools ────────────────────────────────────────────────── */
-.wc-tools {
+.ap-stagecol {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  grid-area: tools;
+  gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
-.wc-tools__grid {
+/* Size container: the bezel fits the camera aspect exactly (no letterbox) */
+.ap-stage {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  flex: 1 1 auto;
+  place-items: center;
+  min-height: 0;
+  container-type: size;
 }
 
-.wc-tools__extra {
+/* ── Status pills ────────────────────────────────────────────────── */
+.ap-pills {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
 }
 
-/* ── Stage: viewport + caption ───────────────────────────────────── */
-.wc-stage {
+.ap-pill {
+  padding: 4px 16px;
+  border: 2px solid var(--ice);
+  border-radius: var(--radius-pill);
+  background: rgba(6, 12, 60, 0.72);
+  box-shadow: 0 3px 0 rgba(6, 12, 60, 0.6);
+  font-size: 24px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ap-pill--live {
+  border-color: var(--white);
+  background: var(--white);
+  color: #0A1CA8;
+}
+
+.ap-pill--starting,
+.ap-pill--ice {
+  color: var(--ice);
+}
+
+/* ── Chrome bezel + feed ─────────────────────────────────────────── */
+.ap-bezel {
+  --bz-pad: 12px;
+  --bz-bar: 34px;
+  --bz-gap: 8px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  grid-area: stage;
+  gap: var(--bz-gap);
   min-width: 0;
+  max-width: 100%;
+  width: min(
+    100cqw,
+    calc((100cqh - var(--bz-bar) - var(--bz-gap) - 2 * var(--bz-pad) - 14px) * var(--cam-ar, 1.7778) + 2 * var(--bz-pad))
+  );
+  padding: var(--bz-pad);
+  border-radius: var(--radius-bezel);
+  background: var(--chrome-bezel);
+  box-shadow:
+    0 0 0 3px var(--abyss),
+    0 14px 0 rgba(6, 12, 60, 0.6),
+    inset 0 2px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -3px 0 rgba(6, 12, 60, 0.3);
 }
 
-.wc-viewport {
-  padding: 2px;
-  background: var(--win-gray);
+.ap-bezel__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--bz-bar);
+  padding: 0 4px 0 10px;
 }
 
-.wc-viewport__screen {
+.ap-bezel__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #0A1CA8;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ap-bezel__sub {
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.ap-bezel__controls {
+  display: flex;
+  gap: 6px;
+}
+
+.ap-winbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  border: 2px solid #2A3A86;
+  border-radius: 9px;
+  background: var(--gel-silver);
+  color: #0A1CA8;
+  font-family: var(--font-ui);
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: 0 3px 0 rgba(6, 12, 60, 0.55);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-snap), filter var(--dur-fast) var(--ease-snap);
+}
+
+.ap-winbtn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.ap-winbtn:active,
+.ap-winbtn[aria-pressed='true'] {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(6, 12, 60, 0.55);
+}
+
+.ap-winbtn:focus-visible {
+  outline: 3px dashed #0A1CA8;
+  outline-offset: 2px;
+}
+
+.ap-winbtn--close {
+  background: var(--gel-blue);
+  color: var(--white);
+}
+
+.ap-screen {
   position: relative;
   width: 100%;
   overflow: hidden;
   aspect-ratio: var(--cam-aspect, 16 / 9);
+  border-radius: 16px;
   background: var(--black);
+  box-shadow: 0 0 0 2px rgba(6, 12, 60, 0.85);
 }
 
-.wc-viewport__screen .magic-canvas {
+.ap-screen .magic-canvas {
   position: absolute;
   inset: 0;
   display: block;
@@ -104,73 +275,388 @@
   object-fit: contain;
 }
 
-/* ── Viewport HUD: mint VT323 on black chips (readable over video) ── */
-.wc-hud {
+.ap-screen__gloss {
   position: absolute;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: calc(100% - 16px);
-  padding: 1px 6px;
-  overflow: hidden;
-  background: var(--black);
-  color: var(--mint);
-  font-size: var(--text-ui-min);
-  line-height: 1.1;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
-.wc-hud--tl { top: 8px; left: 8px; }
-.wc-hud--tr { top: 8px; right: 8px; }
-.wc-hud--bl { bottom: 8px; left: 8px; }
-.wc-hud--br { right: 8px; bottom: 8px; }
-
-.wc-hud__rec-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: var(--hot-magenta);
+/* Tracking brackets: lock inward and glow once two hands are tracked */
+.ap-brackets {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
 }
 
-/* ── Right panel ─────────────────────────────────────────────────── */
-.wc-panel {
+.ap-brackets span {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: var(--mint);
+  border-style: solid;
+  border-width: 0;
+  transition: transform var(--dur-med) var(--ease-snap), filter var(--dur-med) var(--ease-snap);
+}
+
+.ap-brackets span:nth-child(1) { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; }
+.ap-brackets span:nth-child(2) { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
+.ap-brackets span:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; }
+.ap-brackets span:nth-child(4) { right: 0; bottom: 0; border-right-width: 4px; border-bottom-width: 4px; }
+
+.ap-brackets--locked span {
+  filter: drop-shadow(0 0 6px var(--mint));
+}
+
+.ap-brackets--locked span:nth-child(1) { transform: translate(10px, 10px); }
+.ap-brackets--locked span:nth-child(2) { transform: translate(-10px, 10px); }
+.ap-brackets--locked span:nth-child(3) { transform: translate(10px, -10px); }
+.ap-brackets--locked span:nth-child(4) { transform: translate(-10px, -10px); }
+
+.ap-glitch {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ap-glitch__slice {
+  position: absolute;
+  right: -6%;
+  left: -6%;
+  height: 9%;
+  background: linear-gradient(90deg, rgba(79, 109, 255, 0.55), rgba(255, 255, 255, 0.85), rgba(158, 192, 255, 0.55));
+  opacity: 0;
+}
+
+.ap-glitch__slice:nth-child(1) { top: 16%; }
+.ap-glitch__slice:nth-child(2) { top: 47%; height: 5%; }
+.ap-glitch__slice:nth-child(3) { top: 74%; height: 12%; }
+
+.ap-glitch__flash {
+  position: absolute;
+  inset: 0;
+  background: var(--white);
+  opacity: 0;
+}
+
+/* Inset past the tracking brackets (12px + 30px + lock travel) */
+.ap-rec {
+  position: absolute;
+  top: 20px;
+  left: 60px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 14px;
+  border: 2px solid var(--white);
+  border-radius: var(--radius-pill);
+  background: var(--black);
+  font-size: 24px;
+  line-height: 1.2;
+  animation: ap-rec-pulse 1.4s ease-out infinite;
+}
+
+.ap-rec .ch-dot {
+  animation: ap-rec-dot 1.4s steps(2, start) infinite;
+}
+
+@keyframes ap-rec-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(224, 43, 200, 0.7); }
+  100% { box-shadow: 0 0 0 12px rgba(224, 43, 200, 0); }
+}
+
+@keyframes ap-rec-dot {
+  to { opacity: 0.25; }
+}
+
+.ap-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 60px;
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+  padding: 2px 12px;
+  background: var(--black);
+  font-size: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Paused / resuming notice inside the feed */
+.ap-paused {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(6, 12, 60, 0.55);
+}
+
+.ap-paused .w98-msgbox {
+  width: min(380px, 100%);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white),
+    var(--shadow-hard-lg);
+}
+
+.ap-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  grid-area: panel;
-  min-width: 0;
+  gap: 8px;
 }
 
-.wc-panel__stack {
+/* ── Filter dock: gel orbs ───────────────────────────────────────── */
+.ap-dock {
+  flex: 0 0 auto;
+}
+
+.ap-dock__list {
+  display: flex;
+  justify-content: center;
+  gap: clamp(8px, 1.3vw, 22px);
+  padding: 8px 4px 2px;
+  list-style: none;
+}
+
+.ap-orb {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ice);
+  cursor: pointer;
+  animation: ap-bob 3.8s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.55s);
 }
 
-.wc-panel__filter-name {
-  font-size: var(--text-ui-lg);
+.ap-orb__ball {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb);
+  height: var(--orb);
+  border-radius: 50%;
+  transition: scale var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap);
+}
+
+/* The orb fills ~2/3 of the PNG, so the image overhangs the ball */
+.ap-orb__img {
+  position: absolute;
+  inset: -26%;
+  width: 152%;
+  max-width: none;
+}
+
+.ap-orb__icon {
+  position: relative;
+  display: inline-flex;
+  color: var(--white);
+  filter: drop-shadow(0 1px 0 rgba(6, 12, 60, 0.8));
+}
+
+.ap-orb__label {
+  font-size: 21px;
   line-height: 1;
 }
 
-.wc-panel__text {
-  font-size: var(--text-ui-min);
-  line-height: 1.1;
+.ap-orb:hover .ap-orb__ball {
+  scale: 1.08;
 }
 
-.wc-band {
-  display: block;
-  padding: 2px 6px;
-  background: var(--magenta);
+.ap-orb--active {
   color: var(--white);
-  font-size: var(--text-ui-min);
+}
+
+.ap-orb--active .ap-orb__ball {
+  box-shadow:
+    0 0 0 4px var(--white),
+    0 0 0 9px rgba(158, 192, 255, 0.55),
+    0 0 28px 8px rgba(158, 192, 255, 0.75);
+}
+
+.ap-orb:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 4px;
+}
+
+@keyframes ap-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+
+/* ── Right column ────────────────────────────────────────────────── */
+.ap-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  margin: 0 -10px;
+  padding: 4px 10px 18px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.ap-glass {
+  padding: 14px 20px 16px;
+  border: 3px solid var(--white);
+  border-radius: var(--radius-panel);
+  background: var(--glass);
+  box-shadow: 0 0 0 3px var(--abyss), var(--shadow-hard);
+}
+
+.ap-glass__kicker {
+  color: var(--ice);
+  font-size: 24px;
+}
+
+.ap-glass__name {
+  margin: 2px 0 6px;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 1.7vw, 27px);
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.ap-glass__desc {
+  font-size: 22px;
   line-height: 1.1;
 }
 
-/* Audio visualizer: mint on black */
-.wc-audio {
+.ap-glass__bg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ap-glass__note {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--magenta);
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.ap-glass__capture {
+  width: 100%;
+  min-height: 46px;
+  font-size: 14px;
+}
+
+.ap-settings-wrap {
+  padding: 0 4px;
+}
+
+.ap-settings {
+  rotate: -1.5deg;
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light),
+    var(--shadow-hard-lg);
+}
+
+.ap-settings .w98-titlebar__text {
+  font-size: 22px;
+}
+
+.ap-settings__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px 12px;
+  font-size: 22px;
+}
+
+.ap-settings__audio {
+  margin-top: 6px;
+  padding: 6px;
+  background: var(--black);
+  color: var(--mint);
+}
+
+/* Intensity slider with a gel-orb thumb (PNG cropped to its circle so the
+   black corners never show on the grey window) */
+.ap-gel-slider .w98-slider__input {
+  height: 36px;
+}
+
+.ap-gel-slider .w98-slider__input::-webkit-slider-runnable-track {
+  height: 8px;
+}
+
+.ap-gel-slider .w98-slider__input::-moz-range-track {
+  height: 8px;
+}
+
+.ap-gel-slider .w98-slider__input::-webkit-slider-thumb {
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: url('/assets/gel-orb.png') center / 158% no-repeat;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.ap-gel-slider .w98-slider__input::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: url('/assets/gel-orb.png') center / 158% no-repeat;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.ap-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 12px;
+}
+
+.ap-actions .ch-pill {
+  min-height: 54px;
+  padding: 0 12px;
+  font-size: 15px;
+}
+
+.ap-actions__camera {
+  grid-column: 1 / -1;
+}
+
+.ap-actions__rec--on .ch-dot {
+  animation: ap-rec-dot 1s steps(2, start) infinite;
+}
+
+/* Hand-tracking failure notice (top of the right column) */
+.ap-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  color: var(--black);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.ap-banner__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Audio visualizer (inside settings) */
+.ap-audio {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -178,96 +664,115 @@
   line-height: 1.1;
 }
 
-.wc-audio__canvas {
+.ap-audio__canvas {
   display: block;
   width: 100%;
-  height: auto;
+  height: 48px;
   image-rendering: pixelated;
 }
 
-/* ── Taskbar ─────────────────────────────────────────────────────── */
-.wc-taskbar {
-  position: fixed;
+/* ── Minimized: taskbar tab restores ─────────────────────────────── */
+.ap--min .ap-main,
+.ap--min .ap-pills {
+  visibility: hidden;
+}
+
+.ap-taskbar {
+  position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: calc(var(--ticker-h) + 18px);
   left: 0;
-  z-index: 20;
   display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ap-taskbar__tab {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: var(--taskbar-h);
-  padding: 4px;
-  background: var(--win-gray);
-  box-shadow: inset 0 1px var(--win-light), inset 0 2px var(--white);
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 3px solid var(--white);
+  border-radius: var(--radius-pill);
+  background: var(--gel-silver);
+  color: #0A1CA8;
   font-family: var(--font-ui);
-  font-size: var(--text-ui-min);
+  font-size: 24px;
+  box-shadow: var(--shadow-hard), var(--outline-abyss);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: ap-bob 2.6s ease-in-out infinite;
 }
 
-/* Flat band, not bevelled, so it never reads as a button */
-.wc-taskbar__start {
+.ap-taskbar__tab:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 5px;
+}
+
+.ap-taskbar__icon {
   display: inline-flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 10px;
-  background: var(--magenta);
-  color: var(--white);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  user-select: none;
+  width: 22px;
 }
 
-.wc-taskbar__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 100%;
-  min-width: 0;
-  max-width: 200px;
-  padding: 0 8px;
-  overflow: hidden;
-  background: var(--win-light);
-  white-space: nowrap;
-  user-select: none;
-  box-shadow:
-    inset -1px -1px var(--white),
-    inset 1px 1px var(--win-dark),
-    inset -2px -2px var(--win-light),
-    inset 2px 2px var(--win-shadow);
+.ap-taskbar__state {
+  color: #26348C;
 }
 
-.wc-taskbar__clock {
-  margin-left: auto;
-  height: 100%;
+/* ── Maximized: the feed takes the whole main area ───────────────── */
+/* The header row folds away too, so the feed gains height as well as width */
+.ap--max .ap-layout {
+  grid-template-rows: 0 minmax(0, 1fr);
+  padding-top: 14px;
 }
 
-/* ── Modal layer (help dialog) ───────────────────────────────────── */
-.wc-modal {
+.ap--max .ap-top {
+  visibility: hidden;
+}
+
+.ap--max .ap-main {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ap--max .ap-side {
+  display: none;
+}
+
+/* ── Modal (help dialog) ─────────────────────────────────────────── */
+.ap-modal {
   position: fixed;
   inset: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4) var(--space-4) calc(var(--taskbar-h) + var(--space-4));
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(6, 12, 60, 0.6);
 }
 
-.wc-shortcuts {
+.ap-modal .w98-msgbox {
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white),
+    var(--shadow-hard-lg);
+}
+
+.ap-shortcuts {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 2px var(--space-3);
   padding: var(--space-2);
   background: var(--white);
-  font-size: var(--text-ui-min);
+  font-size: 20px;
   line-height: 1.15;
 }
 
-.wc-shortcuts dt {
+.ap-shortcuts dt {
   font-weight: 400;
 }
 
-.wc-kbd {
+.ap-kbd {
   display: inline-block;
   min-width: 22px;
   padding: 0 4px;
@@ -278,161 +783,231 @@
     inset 1px 1px var(--white);
 }
 
-/* ── Paused overlay (inside the viewport) ────────────────────────── */
-.wc-paused {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3);
-}
-
-.wc-paused .w98-msgbox {
-  width: min(360px, 100%);
-}
-
-/* ── Loading overlay ─────────────────────────────────────────────── */
-.wc-overlay {
-  position: fixed;
-  inset: 0 0 var(--taskbar-h);
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  background: var(--desktop-bg);
-}
-
-.wc-loading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: min(360px, 70vw);
-}
-
-.wc-terminal {
-  min-height: 84px;
-  padding: var(--space-2);
-  background: var(--black);
-  color: var(--mint);
-  font-size: var(--text-ui-min);
-  line-height: 1.2;
-  white-space: pre-wrap;
-}
-
 /* ── Toasts ──────────────────────────────────────────────────────── */
-.wc-toasts {
+.ap-toasts {
   position: fixed;
-  right: var(--space-3);
-  bottom: calc(var(--taskbar-h) + var(--space-3));
+  right: var(--pad-x, 24px);
+  bottom: calc(var(--ticker-h) + 18px);
   z-index: 35;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-2);
-  width: min(320px, calc(100vw - 2 * var(--space-3)));
+  width: min(320px, calc(100vw - 32px));
   pointer-events: none;
 }
 
-.wc-toast {
+.ap-toast {
   width: 100%;
-  animation: wc-pop var(--dur-med) var(--ease-step);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white),
+    var(--shadow-hard-lg);
+  animation: ap-pop var(--dur-med) var(--ease-snap);
 }
 
-.wc-toast .w98-msgbox__content {
+.ap-toast .w98-msgbox__content {
   align-items: center;
   padding: var(--space-2) var(--space-3);
 }
 
-@keyframes wc-pop {
-  from { transform: translateY(12px); }
-  to { transform: translateY(0); }
+@keyframes ap-pop {
+  from { transform: translateY(14px) scale(0.96); }
+  to { transform: none; }
 }
 
-/* ── Hand-tracking banner ────────────────────────────────────────── */
-.wc-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-ui-min);
-  line-height: 1.1;
-}
+/* ── Short screens: tighter chrome so the feed stays big ─────────── */
+@media (max-height: 800px) and (min-width: 1000px) {
+  .ap {
+    --top-h: 64px;
+    --orb: 58px;
+  }
 
-.wc-banner__text {
-  flex: 1 1 auto;
-  min-width: 0;
-}
+  .ap-logo {
+    width: clamp(170px, 14vw, 210px);
+  }
 
-@media (prefers-reduced-motion: reduce) {
-  .wc-toast {
-    animation: none;
+  .ap-top {
+    padding-left: clamp(170px, 14vw, 210px);
+  }
+
+  .ap-pill {
+    font-size: 22px;
+  }
+
+  .ap-orb__label {
+    font-size: 19px;
+  }
+
+  .ap-side {
+    gap: 14px;
+  }
+
+  .ap-glass {
+    padding: 10px 16px 12px;
+  }
+
+  .ap-glass__kicker,
+  .ap-glass__desc {
+    font-size: 20px;
+  }
+
+  .ap-glass__bg {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .ap-glass__note {
+    font-size: 19px;
+  }
+
+  .ap-glass__capture {
+    min-height: 40px;
+  }
+
+  .ap-settings__body {
+    gap: 0;
+    padding: 6px 12px 8px;
+    font-size: 20px;
+  }
+
+  .ap-gel-slider .w98-slider__input {
+    height: 30px;
+  }
+
+  .ap-actions {
+    gap: 10px;
+  }
+
+  .ap-actions .ch-pill {
+    min-height: 44px;
   }
 }
 
-/* ── Responsive: below ~900px ────────────────────────────────────── */
-@media (max-width: 899px) {
-  .wc-desktop {
-    display: block;
-    padding: 0 0 var(--taskbar-h);
+/* ── Narrow: single scrolling column ─────────────────────────────── */
+@media (max-width: 999px) {
+  .ap {
+    --top-h: auto;
+    overflow-y: auto;
   }
 
-  .wc-main {
-    display: block;
+  .ap-layout {
+    grid-template-rows: auto auto;
+    gap: 14px;
+    height: auto;
+    min-height: 100%;
+    padding-top: 10px;
   }
 
-  .wc-window {
-    max-width: none;
-    margin: 0;
+  .ap-top {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-left: 0;
   }
 
-  .wc-body {
-    grid-template-areas:
-      'tools'
-      'stage'
-      'panel';
+  .ap-logo {
+    position: static;
+    width: 170px;
+    margin: -6px 0 -10px -8px;
+  }
+
+  .ap-main {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Filter tools become one horizontally scrollable row */
-  .wc-tools {
-    flex-direction: row;
+  .ap-stage {
+    container-type: inline-size;
+  }
+
+  .ap-bezel {
+    --bz-pad: 8px;
+    width: 100%;
+    border-radius: 20px;
+  }
+
+  .ap-bezel__title {
+    font-size: 13px;
+  }
+
+  .ap-winbtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ap-dock__list {
+    justify-content: flex-start;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 12px 10px 10px;
   }
 
-  .wc-tools__grid,
-  .wc-tools__extra {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: row;
-    gap: 4px;
+  .ap-side {
+    overflow: visible;
   }
 
-  .wc-tools .w98-tool {
-    flex: 0 0 auto;
-    min-width: 96px;
-    min-height: 56px;
+  .ap-scene__ticker {
+    position: fixed;
+    z-index: 30;
   }
 
-  .wc-tools .w98-tool__label {
-    white-space: nowrap;
+  .ap-scene__orbit {
+    width: 150px;
+  }
+
+  .ap-scene__globe {
+    width: 360px;
+    right: -120px;
   }
 }
 
-/* Narrow viewports: move the filter caption under the hands counter so the
-   two bottom chips never overlap */
 @media (max-width: 599px) {
-  .wc-hud--br {
-    top: 40px;
-    bottom: auto;
+  .ap-pill {
+    padding: 3px 12px;
+    font-size: 21px;
+  }
+
+  .ap-hint {
+    bottom: 10px;
+    left: 40px;
+    max-width: calc(100% - 80px);
+    font-size: 19px;
+  }
+
+  .ap-rec {
+    top: 10px;
+    left: 40px;
+    font-size: 21px;
+  }
+
+  .ap-brackets span {
+    width: 20px;
+    height: 20px;
   }
 }
 
 /* Touch: keep every target >= 40px */
 @media (pointer: coarse) {
-  .wc-taskbar {
-    height: 44px;
+  .ap-winbtn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-scene__orbit img,
+  .ap-orb,
+  .ap-rec,
+  .ap-rec .ch-dot,
+  .ap-actions__rec--on .ch-dot,
+  .ap-taskbar__tab,
+  .ap-toast {
+    animation: none;
+  }
+
+  .ap-brackets span,
+  .ap-orb__ball,
+  .ap-winbtn {
+    transition: none;
   }
 }

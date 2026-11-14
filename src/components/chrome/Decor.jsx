@@ -134,9 +134,10 @@ export function Ticker({ items, css = false, className }) {
 }
 
 /** The chrome WEBCLOAK wordmark (real image asset, screen-blended). */
-export function ChromeLogo({ className, decorative = false }) {
+export function ChromeLogo({ className, decorative = false, ...rest }) {
   return (
     <img
+      {...rest}
       className={cx('ch-screen ch-logo', className)}
       src={ASSETS.logo}
       width="200"

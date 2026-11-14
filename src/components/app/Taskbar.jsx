@@ -1,39 +1,21 @@
 /**
- * Taskbar.jsx — Desktop taskbar: decorative start band and task tab
- * (aria-hidden, not focusable) plus a real clock.
+ * Taskbar.jsx — Shown while the window is minimized. Its tab is a real
+ * button: it restores the window and resumes the camera.
  */
 
-import { memo, useEffect, useState } from 'react'
-import { AppIcon, StatusField } from '../win98/index.js'
+import { forwardRef } from 'react'
+import { AppIcon } from '../win98/index.js'
 
-function formatClock(date) {
-  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
-}
-
-function Clock() {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
+const Taskbar = forwardRef(function Taskbar({ onRestore }, ref) {
   return (
-    <StatusField className="wc-taskbar__clock">
-      <time dateTime={now.toISOString()}>{formatClock(now)}</time>
-    </StatusField>
-  )
-}
-
-function Taskbar() {
-  return (
-    <div className="wc-taskbar">
-      <span className="wc-taskbar__start" aria-hidden="true">start</span>
-      <span className="wc-taskbar__tab" aria-hidden="true">
-        <AppIcon />
-        webcloak.exe
-      </span>
-      <Clock />
+    <div className="ap-taskbar">
+      <button ref={ref} type="button" className="ap-taskbar__tab" onClick={onRestore}>
+        <span className="ap-taskbar__icon" aria-hidden="true"><AppIcon /></span>
+        <span>webcloak.exe</span>
+        <span className="ap-taskbar__state">camera paused. click to restore</span>
+      </button>
     </div>
   )
-}
+})
 
-export default memo(Taskbar)
+export default Taskbar

@@ -1,10 +1,11 @@
 /**
- * SidePanel.jsx — Right-hand controls: current filter, intensity, toggles,
- * background capture, snapshot/record and the audio visualizer.
+ * SidePanel.jsx — Right column: glass filter card, tilted settings.exe
+ * window (real settings only) and glossy pill buttons.
  */
 
 import { memo } from 'react'
-import { Button, Checkbox, Groupbox, Panel, Slider } from '../win98/index.js'
+import { FILTERS } from '../../engine/filters.js'
+import { Checkbox, Slider, Window } from '../win98/index.js'
 import AudioVisualizer from '../AudioVisualizer.jsx'
 
 function SidePanel({
@@ -24,86 +25,88 @@ function SidePanel({
   isRecording,
   canRecord,
   onToggleRecording,
+  cameraPaused,
+  cameraBusy,
+  onToggleCamera,
   audioLevels,
+  banner,
 }) {
   // The cloak shows nothing useful until a background exists: make it obvious.
-  const needsBg = filter?.id === 'cloak' && !hasBgImage
+  const isCloak = filter?.id === 'cloak'
+  const needsBg = isCloak && !hasBgImage
+  const number = String(FILTERS.indexOf(filter) + 1).padStart(2, '0')
 
   return (
-    <aside className="wc-panel" aria-label="controls">
-      <Groupbox legend="filter">
-        <div className="wc-panel__stack">
-          <p className="wc-panel__filter-name">{filter?.label.toLowerCase()}</p>
-          <p className="wc-panel__text">{filter?.description}</p>
-        </div>
-      </Groupbox>
+    <aside className="ap-side" aria-label="controls">
+      {banner}
 
-      <Groupbox legend="background">
-        <div className="wc-panel__stack">
-          {needsBg ? (
-            <p className="wc-band">no background yet. step out of frame, then capture.</p>
-          ) : (
-            <p className="wc-panel__text">background: {hasBgImage ? 'captured' : 'none'}</p>
-          )}
-          <Button
-            block
-            variant={needsBg ? 'default' : 'normal'}
-            onClick={onCaptureBackground}
-            disabled={!canCapture}
-            aria-keyshortcuts="b"
-          >
-            {hasBgImage ? 'recapture background' : 'capture background'}
-          </Button>
-        </div>
-      </Groupbox>
+      <section className="ap-glass" aria-labelledby="ap-filter-name" data-boot-in>
+        <p className="ap-glass__kicker">filter {number}</p>
+        <h2 id="ap-filter-name" className="ap-glass__name">{filter?.label}</h2>
+        <p className="ap-glass__desc">{filter?.description.toLowerCase()}.</p>
+        {isCloak && (
+          <div className="ap-glass__bg">
+            {needsBg && <p className="ap-glass__note">no background yet. step out of frame, then capture.</p>}
+            <button
+              type="button"
+              className="ch-pill ch-pill--silver ap-glass__capture"
+              onClick={onCaptureBackground}
+              disabled={!canCapture}
+              aria-keyshortcuts="b"
+            >
+              {hasBgImage ? 'recapture background' : 'capture background'}
+            </button>
+          </div>
+        )}
+      </section>
 
-      <Groupbox legend="settings">
-        <div className="wc-panel__stack">
-          <Slider
-            label="intensity"
-            value={Math.round(intensity * 100)}
-            onChange={(v) => onIntensityChange(v / 100)}
-            format={(v) => `${v}%`}
-          />
-          <Checkbox
-            label="mirror camera"
-            checked={mirror}
-            onChange={onToggleMirror}
-            aria-keyshortcuts="m"
-          />
-          <Checkbox
-            label="audio reactive"
-            checked={audioEnabled}
-            onChange={onToggleAudio}
-            aria-keyshortcuts="a"
-          />
-          <Checkbox
-            label="wireframe"
-            checked={showWireframe}
-            onChange={onToggleWireframe}
-            aria-keyshortcuts="w"
-          />
-        </div>
-      </Groupbox>
+      <div className="ap-settings-wrap" data-boot-in>
+        <Window title="settings.exe" titleAs="h2" className="ap-settings">
+          <div className="ap-settings__body">
+            <Slider
+              className="ap-gel-slider"
+              label="intensity"
+              value={Math.round(intensity * 100)}
+              onChange={(v) => onIntensityChange(v / 100)}
+              format={(v) => `${v}%`}
+            />
+            <Checkbox label="mirror camera" checked={mirror} onChange={onToggleMirror} aria-keyshortcuts="m" />
+            <Checkbox label="audio reactive" checked={audioEnabled} onChange={onToggleAudio} aria-keyshortcuts="a" />
+            <Checkbox label="wireframe" checked={showWireframe} onChange={onToggleWireframe} aria-keyshortcuts="w" />
+            {audioEnabled && (
+              <div className="ap-settings__audio">
+                <AudioVisualizer audioLevels={audioLevels} visible />
+              </div>
+            )}
+          </div>
+        </Window>
+      </div>
 
-      <Groupbox legend="capture">
-        <div className="wc-panel__stack">
-          <Button block onClick={onScreenshot} aria-keyshortcuts="s">snapshot</Button>
-          <Button
-            block
-            aria-pressed={isRecording}
-            onClick={onToggleRecording}
-            disabled={!isRecording && !canRecord}
-            aria-keyshortcuts="r"
-          >
-            {isRecording ? 'stop recording' : 'record'}
-          </Button>
-        </div>
-      </Groupbox>
-
-      <Panel variant="sunken" dark>
-        <AudioVisualizer audioLevels={audioLevels} visible={audioEnabled} />
-      </Panel>
+      <div className="ap-actions" data-boot-in>
+        <button type="button" className="ch-pill ch-pill--silver" onClick={onScreenshot} aria-keyshortcuts="s">
+          snapshot
+        </button>
+        <button
+          type="button"
+          className={`ch-pill${isRecording ? ' ap-actions__rec--on' : ''}`}
+          aria-pressed={isRecording}
+          onClick={onToggleRecording}
+          disabled={!isRecording && !canRecord}
+          aria-keyshortcuts="r"
+        >
+          <span className="ch-dot" aria-hidden="true" /> {isRecording ? 'stop rec' : 'record'}
+        </button>
+        <button
+          type="button"
+          className="ch-pill ap-actions__camera"
+          onClick={onToggleCamera}
+          disabled={cameraBusy}
+          aria-keyshortcuts="c"
+        >
+          <span aria-hidden="true">{cameraPaused ? '▶' : '❚❚'}</span>
+          {cameraPaused ? ' resume camera' : ' stop camera'}
+        </button>
+      </div>
     </aside>
   )
 }

@@ -7,7 +7,8 @@
  *
  * Fields:
  *   id          — stable key used in state and the render dispatcher
- *   label       — short name shown on the control-panel card and in toasts
+ *   short       — one-word name under the dock orb
+ *   label       — name shown in the side panel and in toasts
  *   hudLabel    — longer name shown in the HUD header
  *   icon        — icon component for the control-panel card
  *   description — hover text in the control panel
@@ -21,14 +22,16 @@ import {
 export const FILTERS = [
   {
     id: 'cloak',
+    short: 'cloak',
     label: 'INVISIBILITY',
     hudLabel: 'INVISIBILITY CLOAK',
     icon: IconEyeOff,
-    description: 'Blend captured background into the ROI',
+    description: 'Blend the captured background into the space between your hands',
     shaderKey: null,
   },
   {
     id: 'matrix',
+    short: 'matrix',
     label: 'MATRIX RAIN',
     hudLabel: 'MATRIX RAIN',
     icon: IconGrid,
@@ -37,6 +40,7 @@ export const FILTERS = [
   },
   {
     id: 'thermal',
+    short: 'thermal',
     label: 'THERMAL',
     hudLabel: 'THERMAL VISION',
     icon: IconActivity,
@@ -45,6 +49,7 @@ export const FILTERS = [
   },
   {
     id: 'edge',
+    short: 'edge',
     label: 'EDGE SYNTH',
     hudLabel: 'EDGE SYNTH',
     icon: IconZap,
@@ -53,6 +58,7 @@ export const FILTERS = [
   },
   {
     id: 'pixelate',
+    short: 'glitch',
     label: 'PIXEL GLITCH',
     hudLabel: 'PIXEL GLITCH',
     icon: IconGrid,
@@ -61,6 +67,7 @@ export const FILTERS = [
   },
   {
     id: 'catwhiskers',
+    short: 'whiskers',
     label: 'CAT WHISKERS',
     hudLabel: 'CAT WHISKERS',
     icon: IconCat,
@@ -69,6 +76,7 @@ export const FILTERS = [
   },
   {
     id: 'kaleidoscope',
+    short: 'kaleido',
     label: 'KALEIDOSCOPE',
     hudLabel: 'KALEIDOSCOPE',
     icon: IconRainbow,

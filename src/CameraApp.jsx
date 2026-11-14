@@ -1,6 +1,7 @@
 /**
  * CameraApp.jsx — Webcloak camera app (/app).
- * Wires webcam, hand tracking, shaders, audio and the Win98-style UI.
+ * Wires webcam, hand tracking, shaders, audio and the blue chrome UI
+ * (boot dialog, chrome-bezel feed, gel-orb dock, settings.exe window).
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -24,16 +25,18 @@ import { setMirror } from './engine/mirror.js'
 // Components
 import MagicCanvas from './components/MagicCanvas.jsx'
 import BootScreen from './components/boot/BootScreen.jsx'
-import { AppIcon, StatusField, TitleBarButton, ToolButton, Window } from './components/win98/index.js'
-import FilterTools from './components/app/FilterTools.jsx'
+import { cx } from './components/win98/cx.js'
+import { ChromeLogo } from './components/chrome/Decor.jsx'
+import AppScene from './components/app/AppScene.jsx'
+import FeedFrame from './components/app/FeedFrame.jsx'
+import FilterDock from './components/app/FilterDock.jsx'
+import StatusPills from './components/app/StatusPills.jsx'
 import SidePanel from './components/app/SidePanel.jsx'
-import ViewportHud from './components/app/ViewportHud.jsx'
 import Taskbar from './components/app/Taskbar.jsx'
 import ShortcutsDialog from './components/app/ShortcutsDialog.jsx'
 import Toasts from './components/app/Toasts.jsx'
 import TrackingBanner from './components/app/TrackingBanner.jsx'
 import PausedOverlay from './components/app/PausedOverlay.jsx'
-import { IconCamera } from './components/Icons.jsx'
 import './components/app/app.css'
 
 gsap.registerPlugin(useGSAP)
@@ -60,7 +63,7 @@ const SHORTCUTS = [
   ['m', 'mirror camera on / off'],
   ['a', 'audio reactive on / off'],
   ['c', 'camera on / off'],
-  ['esc', 'close this dialog'],
+  ['esc', 'close this dialog / leave maximized'],
 ]
 
 // First supported WebM codec, best first; null when recording isn't available.
@@ -82,7 +85,6 @@ export default function CameraApp() {
   const [recordStartedAt, setRecordStartedAt] = useState(null)
   const [bgImage, setBgImage] = useState(null)
   const [audioLevels, setAudioLevels] = useState(ZERO_LEVELS)
-  const [confidence, setConfidence] = useState(0)
   const [handsCount, setHandsCount] = useState(0)
   const [toasts, setToasts] = useState([])
   const [helpOpen, setHelpOpen] = useState(false)
@@ -97,6 +99,9 @@ export default function CameraApp() {
   const [minElapsed, setMinElapsed] = useState(false)
   const [pipelineInfo, setPipelineInfo] = useState({ ready: false, failed: 0 })
   const [bootDone, setBootDone] = useState(false)
+  // Window controls
+  const [minimized, setMinimized] = useState(false)
+  const [maximized, setMaximized] = useState(false)
 
   // ── Refs ───────────────────────────────────────────────────────
   const canvasRef = useRef(null)
@@ -110,6 +115,9 @@ export default function CameraApp() {
   const cameraStatusRef = useRef('idle')
   const rootRef = useRef(null)
   const overlayOpenRef = useRef(true)
+  const minimizedRef = useRef(false)
+  const maximizedRef = useRef(false)
+  const taskbarRef = useRef(null)
   const launchedRef = useRef(launched)
 
   // ── Hooks ──────────────────────────────────────────────────────
@@ -130,7 +138,6 @@ export default function CameraApp() {
     retry: retryTracking,
     getQuads,
     getPinchData,
-    getConfidence,
     getHandsCount,
   } = useHandTracking(videoRef, { enabled: bootRequested, running: isVideoReady })
   const { processGestures } = useGestureDetector()
@@ -218,11 +225,10 @@ export default function CameraApp() {
     const id = setInterval(() => {
       setIntensity(live.intensity)
       setAudioLevels(live.audioLevels)
-      setConfidence(Math.round(getConfidence() * 100) / 100)
       setHandsCount(getHandsCount())
     }, UI_SYNC_INTERVAL_MS)
     return () => clearInterval(id)
-  }, [getConfidence, getHandsCount])
+  }, [getHandsCount])
 
   // ── Gesture processing ─────────────────────────────────────────
   useEffect(() => {
@@ -414,10 +420,80 @@ export default function CameraApp() {
     startCamera()
   }, [startCamera])
 
+  // ── Window controls: minimize / maximize / close ───────────────
+  const { contextSafe } = useGSAP({ scope: rootRef })
+  const FRAME_TARGETS = '.ap-main [data-boot-in], .ap-pills'
+  const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  /** Minimize: pause the camera (a manual pause, so a hidden tab never
+   *  auto-resumes it), fold the frames away, show the taskbar tab. */
+  const minimizeWindow = contextSafe(() => {
+    if (minimizedRef.current) return
+    minimizedRef.current = true
+    pauseCamera(false)
+    const done = () => setMinimized(true)
+    if (prefersReduced()) {
+      done()
+      return
+    }
+    gsap.to(FRAME_TARGETS, {
+      scale: 0.4, y: '32vh', opacity: 0, duration: 0.34, ease: 'power2.in', stagger: 0.015, onComplete: done,
+    })
+  })
+
+  /** Restore from the taskbar: frames come back and the camera resumes. */
+  const restoreWindow = contextSafe(() => {
+    if (!minimizedRef.current) return
+    minimizedRef.current = false
+    setMinimized(false)
+    resumeCamera()
+    if (prefersReduced()) {
+      gsap.set(FRAME_TARGETS, { clearProps: 'transform,opacity' })
+    } else {
+      gsap.fromTo(FRAME_TARGETS,
+        { scale: 0.4, y: '32vh', opacity: 0 },
+        {
+          scale: 1, y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.5)', stagger: 0.02,
+          clearProps: 'transform,opacity',
+        })
+    }
+    requestAnimationFrame(() => helpButtonRef.current?.focus())
+  })
+
+  const toggleMaximized = useCallback(() => {
+    setMaximized((v) => {
+      maximizedRef.current = !v
+      return !v
+    })
+  }, [])
+
+  /** Close: save any recording, camera light off, back to the landing page
+   *  (unmount tears down the pipeline, landmarker, audio and stream). */
+  const closeApp = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') stopRecording()
+    pauseWebcam()
+    navigate('/')
+  }, [stopRecording, pauseWebcam, navigate])
+
+  // Taskbar tab takes focus while minimized
+  useEffect(() => {
+    if (minimized) taskbarRef.current?.focus()
+  }, [minimized])
+
+  // Small pop when the feed changes size (skips the first render)
+  const prevMaxRef = useRef(maximized)
+  useGSAP(() => {
+    if (prevMaxRef.current === maximized) return
+    prevMaxRef.current = maximized
+    if (prefersReduced()) return
+    gsap.from('.ap-bezel', { scale: 0.96, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' })
+  }, { dependencies: [maximized], scope: rootRef })
+
   const toggleCamera = useCallback(() => {
-    if (cameraStatusRef.current === 'ready') pauseCamera(false)
+    if (minimizedRef.current) restoreWindow()
+    else if (cameraStatusRef.current === 'ready') pauseCamera(false)
     else if (cameraStatusRef.current === 'paused') resumeCamera()
-  }, [pauseCamera, resumeCamera])
+  }, [pauseCamera, resumeCamera, restoreWindow])
 
   // Auto-pause while the tab is hidden; auto-resume only if the app paused it
   // (a manual stop is never overridden).
@@ -497,6 +573,9 @@ export default function CameraApp() {
         case 'C':
           toggleCamera()
           break
+        case 'Escape':
+          if (maximizedRef.current) toggleMaximized()
+          break
         default: {
           // Digit keys 1..N select filters; N comes from the registry (max 9).
           if (/^[1-9]$/.test(e.key)) {
@@ -513,7 +592,7 @@ export default function CameraApp() {
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio, toggleCamera])
+  }, [showToast, captureBackground, takeScreenshot, toggleRecording, toggleAudio, toggleCamera, toggleMaximized])
 
   // ── Boot tasks (real states only) ──────────────────────────────
   const modelState = !bootRequested ? 'pending' : trackingError ? 'fail' : isTrackingReady ? 'ok' : 'active'
@@ -577,122 +656,95 @@ export default function CameraApp() {
       .to('.bt-globe', { scale: 1.8, opacity: 0, duration: 0.45, ease: 'power2.in' }, 0)
       .to('.bt', { opacity: 0, duration: 0.3, ease: 'none' }, 0.3)
       .from('[data-boot-in]', {
-        opacity: 0, y: 48, scale: 0.92, duration: 0.6, stagger: 0.08, ease: 'back.out(1.5)', clearProps: 'transform,opacity',
+        opacity: 0, y: 48, scale: 0.92, duration: 0.6, stagger: { amount: 0.6 }, ease: 'back.out(1.5)', clearProps: 'transform,opacity',
       }, 0.35)
   }, { dependencies: [bootReady, bootDone], scope: rootRef })
 
-  const aspect = resolution.w > 0 && resolution.h > 0 ? `${resolution.w} / ${resolution.h}` : '16 / 9'
-
-  let statusMessage = 'ready'
-  if (isCameraPaused) statusMessage = 'camera paused'
-  else if (isHalted) statusMessage = 'starting camera'
-  else if (isRecording) statusMessage = 'recording'
-  else if (trackingError) statusMessage = 'hand tracking unavailable'
-  else if (handsCount < 2) statusMessage = 'show both hands to open a portal'
+  const hasRes = resolution.w > 0 && resolution.h > 0
+  const aspect = hasRes ? `${resolution.w} / ${resolution.h}` : '16 / 9'
+  const ar = hasRes ? resolution.w / resolution.h : 16 / 9
+  const liveState = cameraStatus === 'ready' ? 'live' : cameraStatus === 'starting' ? 'starting' : 'paused'
 
   return (
-    <div className="wc-desktop" ref={rootRef}>
+    <div className={cx('ap', minimized && 'ap--min', maximized && 'ap--max')} ref={rootRef}>
       {/* Hidden source video */}
-      <video ref={videoRef} className="wc-video" autoPlay playsInline muted />
+      <video ref={videoRef} className="ap-video" autoPlay playsInline muted />
 
-      <main className="wc-main">
-        {(
-          <Window
-            data-boot-in
-            className="wc-window"
-            title="webcloak.exe - live"
-            titleAs="h1"
-            icon={<AppIcon />}
-            decorativeControls
-            controls={(
-              <TitleBarButton
-                ref={helpButtonRef}
-                onClick={openHelp}
-                aria-label="keyboard shortcuts"
-                aria-haspopup="dialog"
-              >
-                ?
-              </TitleBarButton>
-            )}
-            statusBar={(
-              <>
-                <StatusField grow>{statusMessage}</StatusField>
-                <StatusField>fps {fps}</StatusField>
-                <StatusField>track {Math.round(confidence * 100)}%</StatusField>
-                <StatusField>mic {audioEnabled ? 'on' : 'off'}</StatusField>
-              </>
-            )}
-          >
-            <div className="wc-body">
-              <FilterTools activeFilter={activeFilter} onSelect={handleFilterChange}>
-                <ToolButton
-                  layout="row"
-                  icon={<IconCamera size={20} />}
-                  label={isCameraPaused ? 'camera: off' : 'camera: on'}
-                  aria-label="camera"
-                  aria-keyshortcuts="c"
-                  pressed={!isCameraPaused}
-                  disabled={cameraStatus === 'starting'}
-                  onClick={toggleCamera}
-                />
-              </FilterTools>
+      <AppScene />
 
-              <div className="wc-stage">
-                {/* Non-blocking hand-tracking failure notice */}
-                {trackingError && bootDone && <TrackingBanner onRetry={retryTracking} />}
+      <div className="ap-layout">
+        <header className="ap-top">
+          <ChromeLogo className="ap-logo" data-boot-in />
+          <StatusPills state={liveState} handsCount={handsCount} fps={fps} audioEnabled={audioEnabled} />
+        </header>
 
-                <div className="wc-viewport w98-sunken">
-                  <div className="wc-viewport__screen" style={{ '--cam-aspect': aspect }}>
-                    <MagicCanvas
-                      videoRef={videoRef}
-                      getQuads={getQuads}
-                      filter={activeFilter}
-                      bgImage={bgImage}
-                      showWireframe={showWireframe}
-                      audioEnabled={audioEnabled}
-                      paused={!isVideoReady}
-                      canvasRef={canvasRef}
-                    />
-                    <ViewportHud
-                      isRecording={isRecording}
-                      recordStartedAt={recordStartedAt}
-                      handsCount={handsCount}
-                      filter={filterDef}
-                    />
-                    {isHalted && bootDone && (
-                      <PausedOverlay
-                        resuming={cameraStatus === 'starting'}
-                        autoPaused={autoPaused}
-                        onResume={resumeCamera}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <SidePanel
-                filter={filterDef}
-                intensity={intensity}
-                onIntensityChange={handleIntensityChange}
-                audioEnabled={audioEnabled}
-                onToggleAudio={toggleAudio}
-                showWireframe={showWireframe}
-                onToggleWireframe={handleToggleWireframe}
-                mirror={mirror}
-                onToggleMirror={handleToggleMirror}
-                hasBgImage={!!bgImage}
-                canCapture={isVideoReady}
-                onCaptureBackground={captureBackground}
-                onScreenshot={takeScreenshot}
+        <main className="ap-main">
+          <div className="ap-stagecol">
+            <div className="ap-stage">
+              <FeedFrame
+                filterId={activeFilter}
+                aspect={aspect}
+                ar={ar}
                 isRecording={isRecording}
-                canRecord={isVideoReady}
-                onToggleRecording={toggleRecording}
-                audioLevels={audioLevels}
-              />
+                recordStartedAt={recordStartedAt}
+                handsCount={handsCount}
+                isLive={liveState === 'live'}
+                maximized={maximized}
+                helpRef={helpButtonRef}
+                onHelp={openHelp}
+                onMinimize={minimizeWindow}
+                onMaximize={toggleMaximized}
+                onClose={closeApp}
+                overlay={isHalted && bootDone && !minimized ? (
+                  <PausedOverlay
+                    resuming={cameraStatus === 'starting'}
+                    autoPaused={autoPaused}
+                    onResume={resumeCamera}
+                  />
+                ) : null}
+              >
+                <MagicCanvas
+                  videoRef={videoRef}
+                  getQuads={getQuads}
+                  filter={activeFilter}
+                  bgImage={bgImage}
+                  showWireframe={showWireframe}
+                  audioEnabled={audioEnabled}
+                  paused={!isVideoReady}
+                  canvasRef={canvasRef}
+                />
+              </FeedFrame>
             </div>
-          </Window>
-        )}
-      </main>
+            <FilterDock activeFilter={activeFilter} onSelect={handleFilterChange} />
+          </div>
+
+          <SidePanel
+            filter={filterDef}
+            intensity={intensity}
+            onIntensityChange={handleIntensityChange}
+            audioEnabled={audioEnabled}
+            onToggleAudio={toggleAudio}
+            showWireframe={showWireframe}
+            onToggleWireframe={handleToggleWireframe}
+            mirror={mirror}
+            onToggleMirror={handleToggleMirror}
+            hasBgImage={!!bgImage}
+            canCapture={isVideoReady}
+            onCaptureBackground={captureBackground}
+            onScreenshot={takeScreenshot}
+            isRecording={isRecording}
+            canRecord={isVideoReady}
+            onToggleRecording={toggleRecording}
+            cameraPaused={isCameraPaused}
+            cameraBusy={cameraStatus === 'starting'}
+            onToggleCamera={toggleCamera}
+            audioLevels={audioLevels}
+            banner={trackingError && bootDone ? <TrackingBanner onRetry={retryTracking} /> : null}
+          />
+        </main>
+      </div>
+
+      {minimized && <Taskbar ref={taskbarRef} onRestore={restoreWindow} />}
 
       {/* Boot dialog (and camera errors, in the same style) */}
       {overlayOpen && (
@@ -708,8 +760,6 @@ export default function CameraApp() {
       )}
 
       {helpOpen && <ShortcutsDialog shortcuts={SHORTCUTS} onClose={closeHelp} />}
-
-      <Taskbar />
 
       <Toasts toasts={toasts} />
     </div>

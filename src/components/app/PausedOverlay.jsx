@@ -7,10 +7,10 @@ import { Button, CameraIcon, MessageBox, ProgressBar } from '../win98/index.js'
 
 export default function PausedOverlay({ resuming, autoPaused, onResume }) {
   return (
-    <div className="wc-paused">
+    <div className="ap-paused">
       {resuming ? (
         <MessageBox title="camera" icon={<CameraIcon />} role="status">
-          <div className="wc-panel__stack">
+          <div className="ap-stack">
             <p>starting camera ...</p>
             <ProgressBar label="starting camera" />
           </div>
