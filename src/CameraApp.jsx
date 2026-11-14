@@ -4,7 +4,6 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 // Hooks
 import { useWebcam } from './hooks/useWebcam.js'
@@ -28,6 +27,8 @@ import SidePanel from './components/app/SidePanel.jsx'
 import ViewportHud from './components/app/ViewportHud.jsx'
 import Taskbar from './components/app/Taskbar.jsx'
 import ShortcutsDialog from './components/app/ShortcutsDialog.jsx'
+import Toasts from './components/app/Toasts.jsx'
+import TrackingBanner from './components/app/TrackingBanner.jsx'
 import './components/app/app.css'
 
 const UI_SYNC_INTERVAL_MS = 100
@@ -64,7 +65,6 @@ export default function CameraApp() {
   const [confidence, setConfidence] = useState(0)
   const [handsCount, setHandsCount] = useState(0)
   const [toasts, setToasts] = useState([])
-  const [loadingMessage, setLoadingMessage] = useState('INITIALIZING NEURAL ENGINE...')
   const [helpOpen, setHelpOpen] = useState(false)
 
   // ── Refs ───────────────────────────────────────────────────────
@@ -130,15 +130,6 @@ export default function CameraApp() {
     }
     return () => destroyPipeline()
   }, [isVideoReady, videoRef, showToast])
-
-  // ── Loading messages ───────────────────────────────────────────
-  useEffect(() => {
-    if (!isVideoReady) {
-      setLoadingMessage('CONNECTING TO CAMERA...')
-    } else if (isTrackingLoading) {
-      setLoadingMessage('LOADING MEDIAPIPE NEURAL ENGINE...')
-    }
-  }, [isVideoReady, isTrackingLoading])
 
   // ── Throttled UI sync (~10 Hz) ─────────────────────────────────
   // Per-frame values (intensity, audio levels, tracking stats) live in refs /
@@ -438,18 +429,7 @@ export default function CameraApp() {
 
               <div className="wc-stage">
                 {/* Non-blocking hand-tracking failure notice */}
-                {trackingError && !isLoading && (
-                  <div
-                    role="alert"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '8px 14px', background: 'var(--black)', color: 'var(--mint)',
-                    }}
-                  >
-                    <span>Hand tracking failed to load</span>
-                    <button className="capture-btn" onClick={retryTracking}>Retry</button>
-                  </div>
-                )}
+                {trackingError && !isLoading && <TrackingBanner onRetry={retryTracking} />}
 
                 <div className="wc-viewport w98-sunken">
                   <div className="wc-viewport__screen" style={{ '--cam-aspect': aspect }}>
@@ -495,29 +475,20 @@ export default function CameraApp() {
       </main>
 
       {/* Loading screen */}
-      {showApp && <LoadingScreen visible={isLoading} message={loadingMessage} />}
+      {showApp && (
+        <LoadingScreen
+          visible={isLoading}
+          cameraReady={isVideoReady}
+          trackingReady={isTrackingReady}
+          trackingFailed={Boolean(trackingError)}
+        />
+      )}
 
       {helpOpen && <ShortcutsDialog shortcuts={SHORTCUTS} onClose={closeHelp} />}
 
       <Taskbar />
 
-      {/* Toast Notifications */}
-      <div className="toast-container">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              className={`toast ${toast.type}`}
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-            >
-              {toast.message}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      <Toasts toasts={toasts} />
     </div>
   )
 }

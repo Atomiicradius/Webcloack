@@ -278,6 +278,84 @@
     inset 1px 1px var(--white);
 }
 
+/* ── Loading overlay ─────────────────────────────────────────────── */
+.wc-overlay {
+  position: fixed;
+  inset: 0 0 var(--taskbar-h);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--desktop-bg);
+}
+
+.wc-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(360px, 70vw);
+}
+
+.wc-terminal {
+  min-height: 84px;
+  padding: var(--space-2);
+  background: var(--black);
+  color: var(--mint);
+  font-size: var(--text-ui-min);
+  line-height: 1.2;
+  white-space: pre-wrap;
+}
+
+/* ── Toasts ──────────────────────────────────────────────────────── */
+.wc-toasts {
+  position: fixed;
+  right: var(--space-3);
+  bottom: calc(var(--taskbar-h) + var(--space-3));
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  width: min(320px, calc(100vw - 2 * var(--space-3)));
+  pointer-events: none;
+}
+
+.wc-toast {
+  width: 100%;
+  animation: wc-pop var(--dur-med) var(--ease-step);
+}
+
+.wc-toast .w98-msgbox__content {
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+}
+
+@keyframes wc-pop {
+  from { transform: translateY(12px); }
+  to { transform: translateY(0); }
+}
+
+/* ── Hand-tracking banner ────────────────────────────────────────── */
+.wc-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-ui-min);
+  line-height: 1.1;
+}
+
+.wc-banner__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wc-toast {
+    animation: none;
+  }
+}
+
 /* ── Responsive: below ~900px ────────────────────────────────────── */
 @media (max-width: 899px) {
   .wc-desktop {
