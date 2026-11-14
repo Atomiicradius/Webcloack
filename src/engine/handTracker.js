@@ -6,6 +6,7 @@
 /* global __MEDIAPIPE_VERSION__ */
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 import { convexHull, sortQuadClockwise } from './convexHull.js'
+import { mirrorX } from './mirror.js'
 
 // WASM assets are fetched from the exact version of @mediapipe/tasks-vision
 // that is installed (injected by vite.config.js from node_modules).
@@ -101,7 +102,9 @@ function classifyHands(result) {
 
   for (let i = 0; i < result.landmarks.length; i++) {
     const handedness = result.handednesses?.[i]?.[0]
-    // MediaPipe mirrors: "Left" in data = user's right hand
+    // MediaPipe assumes a mirrored selfie but sees the raw video, so "Left"
+    // here is the user's right hand whatever the display mirror setting.
+    // Pairing needs one of each label, so it is orientation independent.
     const label = handedness?.categoryName || 'Right'
     if (groups[label]) {
       groups[label].push(result.landmarks[i])
@@ -129,10 +132,10 @@ export function extractQuads(result, videoWidth, videoHeight) {
     const rh = rightHands[i]
 
     const rawPoints = [
-      [lh[LANDMARK.THUMB_TIP].x * videoWidth, lh[LANDMARK.THUMB_TIP].y * videoHeight],
-      [lh[LANDMARK.INDEX_TIP].x * videoWidth, lh[LANDMARK.INDEX_TIP].y * videoHeight],
-      [rh[LANDMARK.THUMB_TIP].x * videoWidth, rh[LANDMARK.THUMB_TIP].y * videoHeight],
-      [rh[LANDMARK.INDEX_TIP].x * videoWidth, rh[LANDMARK.INDEX_TIP].y * videoHeight],
+      [mirrorX(lh[LANDMARK.THUMB_TIP].x) * videoWidth, lh[LANDMARK.THUMB_TIP].y * videoHeight],
+      [mirrorX(lh[LANDMARK.INDEX_TIP].x) * videoWidth, lh[LANDMARK.INDEX_TIP].y * videoHeight],
+      [mirrorX(rh[LANDMARK.THUMB_TIP].x) * videoWidth, rh[LANDMARK.THUMB_TIP].y * videoHeight],
+      [mirrorX(rh[LANDMARK.INDEX_TIP].x) * videoWidth, rh[LANDMARK.INDEX_TIP].y * videoHeight],
     ]
 
     // Compute convex hull to prevent self-intersection, then sort clockwise
@@ -156,14 +159,14 @@ export function extractPinchData(result, videoWidth, videoHeight) {
     const handedness = result.handednesses?.[i]?.[0]?.categoryName || 'Unknown'
     const thumb = lm[LANDMARK.THUMB_TIP]
     const index = lm[LANDMARK.INDEX_TIP]
-    const dx = (thumb.x - index.x) * videoWidth
+    const dx = (thumb.x - index.x) * videoWidth // distance: mirror-independent
     const dy = (thumb.y - index.y) * videoHeight
     const pinchDist = Math.sqrt(dx * dx + dy * dy)
     return {
       hand: handedness,
       pinchDist,
-      thumbTip: [thumb.x * videoWidth, thumb.y * videoHeight],
-      indexTip: [index.x * videoWidth, index.y * videoHeight],
+      thumbTip: [mirrorX(thumb.x) * videoWidth, thumb.y * videoHeight],
+      indexTip: [mirrorX(index.x) * videoWidth, index.y * videoHeight],
     }
   })
 }

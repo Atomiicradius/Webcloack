@@ -10,6 +10,7 @@ import { memo, useEffect, useRef } from 'react'
 import { renderFrame, getParticleSystem } from '../engine/renderPipeline.js'
 import { detectBeat, getAudioLevels } from '../engine/audioEngine.js'
 import { live, ZERO_LEVELS } from '../engine/liveState.js'
+import { drawCameraImage } from '../engine/mirror.js'
 
 // Distinct render-error messages already logged (log each once).
 const loggedErrors = new Set()
@@ -102,7 +103,7 @@ function MagicCanvas({
         const w = canvas.width
         canvas.width = w
         try {
-          ctx.drawImage(video, 0, 0, w, canvas.height)
+          drawCameraImage(ctx, video, w, canvas.height)
         } catch {
           // Video not drawable this frame; try again next frame.
         }

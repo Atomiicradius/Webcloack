@@ -10,6 +10,7 @@ import { MatrixRain } from './matrixAscii.js'
 import { ParticleSystem } from './particleSystem.js'
 import { getTimeDomainData } from './audioEngine.js'
 import { getFilter } from './filters.js'
+import { drawCameraImage, isMirrored } from './mirror.js'
 
 // ── Overlay palette (wireframe, vertex markers, edge glow) ─────────
 // mint for lines/markers, magenta for accents. Colours only; widths,
@@ -23,6 +24,12 @@ const MAGENTA_RGB = '224, 43, 200'
 let shaderEngine = null
 let matrixRain = null
 let particleSystem = null
+
+// On-screen (possibly mirrored) copy of the current video frame. Shaders and
+// matrix rain read this instead of the raw video so every effect matches the
+// displayed orientation.
+let frameCanvas = null
+let frameCtx = null
 
 // Matrix rain persistent canvas
 let matrixCanvas = null
@@ -74,16 +81,17 @@ export function renderFrame(ctx, video, quads, config) {
   const width = ctx.canvas.width
   const height = ctx.canvas.height
 
-  // ── 1. Draw full video feed as background ────────────────────────
-  ctx.drawImage(video, 0, 0, width, height)
+  // ── 1. Draw full video feed as background (mirror applied here) ──
+  const source = prepareSource(video, width, height)
+  ctx.drawImage(source, 0, 0, width, height)
 
   // ── 1b. Once-per-frame work shared by every quad ─────────────────
   const hasQuad = quads.some((q) => q && q.length >= 3)
   const shaderKey = getFilter(filter)?.shaderKey
   const usesShader = hasQuad && !!shaderKey && !!shaderEngine
-  if (usesShader) shaderEngine.beginFrame(video)
+  if (usesShader) shaderEngine.beginFrame(source)
   if (hasQuad && filter === 'matrix') {
-    prepareMatrix(video, intensity, width, height)
+    prepareMatrix(source, intensity, width, height)
   }
 
   // ── 2. Process each quad portal ──────────────────────────────────
@@ -110,11 +118,11 @@ export function renderFrame(ctx, video, quads, config) {
       ctx.clip()
 
       // ── 2b. Render effect inside clip ───────────────────────────
-      renderEffect(ctx, video, sorted, filter, intensity, bgImage, time, width, height)
+      renderEffect(ctx, source, sorted, filter, intensity, bgImage, time, width, height)
       ctx.restore()
     } else {
       // Overlay filters: render directly on top of video
-      renderEffect(ctx, video, sorted, filter, intensity, bgImage, time, width, height)
+      renderEffect(ctx, source, sorted, filter, intensity, bgImage, time, width, height)
     }
 
     // ── 2c. Draw vibrating string wireframe ───────────────────────
@@ -136,10 +144,28 @@ export function renderFrame(ctx, video, quads, config) {
 }
 
 /**
+ * The current frame in on-screen orientation: the video element itself when
+ * not mirrored, otherwise a flipped copy (drawn through mirror.js).
+ */
+function prepareSource(video, width, height) {
+  if (!isMirrored()) return video
+  if (!frameCanvas) {
+    frameCanvas = document.createElement('canvas')
+    frameCtx = frameCanvas.getContext('2d')
+  }
+  if (frameCanvas.width !== width || frameCanvas.height !== height) {
+    frameCanvas.width = width
+    frameCanvas.height = height
+  }
+  drawCameraImage(frameCtx, video, width, height)
+  return frameCanvas
+}
+
+/**
  * Advance and draw the matrix rain into its offscreen canvas — once per frame,
  * regardless of how many quads are on screen.
  */
-function prepareMatrix(video, intensity, width, height) {
+function prepareMatrix(source, intensity, width, height) {
   if (!matrixRain) matrixRain = new MatrixRain()
   if (!matrixCanvas) {
     // initPipeline hasn't run (or destroyPipeline cleared it): create lazily
@@ -153,16 +179,16 @@ function prepareMatrix(video, intensity, width, height) {
     matrixCanvas.height = height
     matrixRain.reset()
   }
-  matrixRain.render(matrixCtx, video, width, height, intensity)
+  matrixRain.render(matrixCtx, source, width, height, intensity)
 }
 
 /**
  * Render the selected visual effect within the clipped region.
  */
-function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width, height) {
+function renderEffect(ctx, source, quad, filter, intensity, bgImage, time, width, height) {
   if (filter === 'cloak') {
     if (bgImage) {
-      ctx.drawImage(bgImage, 0, 0, width, height)
+      drawCameraImage(ctx, bgImage, width, height) // raw capture, same mirror as the feed
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
       ctx.fillRect(0, 0, width, height)
@@ -182,7 +208,7 @@ function renderEffect(ctx, video, quad, filter, intensity, bgImage, time, width,
     // WebGL shader-based filters
     const filterDef = getFilter(filter)
     if (filterDef && filterDef.shaderKey && shaderEngine) {
-      const result = shaderEngine.render(filterDef.shaderKey, video, intensity, time)
+      const result = shaderEngine.render(filterDef.shaderKey, source, intensity, time)
       ctx.drawImage(result, 0, 0, width, height)
     }
   }
@@ -466,6 +492,8 @@ export function destroyPipeline() {
   }
   matrixCanvas = null
   matrixCtx = null
+  frameCanvas = null
+  frameCtx = null
   if (particleSystem) {
     particleSystem.clear()
     particleSystem = null

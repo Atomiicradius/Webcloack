@@ -16,6 +16,7 @@ import { initPipeline, destroyPipeline, getShaderFailures } from './engine/rende
 import { FILTERS, getFilter } from './engine/filters.js'
 import { initAudio, destroyAudio } from './engine/audioEngine.js'
 import { live, ZERO_LEVELS } from './engine/liveState.js'
+import { setMirror } from './engine/mirror.js'
 
 // Components
 import MagicCanvas from './components/MagicCanvas.jsx'
@@ -34,6 +35,16 @@ import { IconCamera } from './components/Icons.jsx'
 import './components/app/app.css'
 
 const UI_SYNC_INTERVAL_MS = 100
+const MIRROR_KEY = 'webcloak.mirror'
+
+// Selfie mirror preference; defaults to on. Storage may be unavailable.
+function readMirrorPref() {
+  try {
+    return localStorage.getItem(MIRROR_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
 
 const SHORTCUTS = [
   [`1-${Math.min(FILTERS.length, 9)}`, 'select filter'],
@@ -41,6 +52,7 @@ const SHORTCUTS = [
   ['s', 'snapshot'],
   ['r', 'start / stop recording'],
   ['w', 'wireframe on / off'],
+  ['m', 'mirror camera on / off'],
   ['a', 'audio reactive on / off'],
   ['c', 'camera on / off'],
   ['esc', 'close this dialog'],
@@ -70,6 +82,7 @@ export default function CameraApp() {
   const [toasts, setToasts] = useState([])
   const [helpOpen, setHelpOpen] = useState(false)
   const [autoPaused, setAutoPaused] = useState(false)
+  const [mirror, setMirrorState] = useState(readMirrorPref)
 
   // ── Refs ───────────────────────────────────────────────────────
   const canvasRef = useRef(null)
@@ -143,6 +156,16 @@ export default function CameraApp() {
     }
     return () => destroyPipeline()
   }, [sessionLive, videoRef, showToast])
+
+  // ── Mirror: push to the engine and persist ─────────────────────
+  useEffect(() => {
+    setMirror(mirror)
+    try {
+      localStorage.setItem(MIRROR_KEY, mirror ? '1' : '0')
+    } catch {
+      // storage blocked: the setting just won't persist
+    }
+  }, [mirror])
 
   // ── Throttled UI sync (~10 Hz) ─────────────────────────────────
   // Per-frame values (intensity, audio levels, tracking stats) live in refs /
@@ -379,6 +402,7 @@ export default function CameraApp() {
   }, [])
 
   const handleToggleWireframe = useCallback(() => setShowWireframe((v) => !v), [])
+  const handleToggleMirror = useCallback(() => setMirrorState((v) => !v), [])
 
   // ── Help dialog ────────────────────────────────────────────────
   const openHelp = useCallback(() => {
@@ -417,6 +441,10 @@ export default function CameraApp() {
         case 'w':
         case 'W':
           setShowWireframe((v) => !v)
+          break
+        case 'm':
+        case 'M':
+          setMirrorState((v) => !v)
           break
         case 'a':
         case 'A':
@@ -545,6 +573,8 @@ export default function CameraApp() {
                 onToggleAudio={toggleAudio}
                 showWireframe={showWireframe}
                 onToggleWireframe={handleToggleWireframe}
+                mirror={mirror}
+                onToggleMirror={handleToggleMirror}
                 hasBgImage={!!bgImage}
                 canCapture={isVideoReady}
                 onCaptureBackground={captureBackground}

@@ -15,6 +15,8 @@ function SidePanel({
   onToggleAudio,
   showWireframe,
   onToggleWireframe,
+  mirror,
+  onToggleMirror,
   hasBgImage,
   canCapture,
   onCaptureBackground,
@@ -62,6 +64,12 @@ function SidePanel({
             value={Math.round(intensity * 100)}
             onChange={(v) => onIntensityChange(v / 100)}
             format={(v) => `${v}%`}
+          />
+          <Checkbox
+            label="mirror camera"
+            checked={mirror}
+            onChange={onToggleMirror}
+            aria-keyshortcuts="m"
           />
           <Checkbox
             label="audio reactive"

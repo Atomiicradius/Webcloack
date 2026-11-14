@@ -337,9 +337,12 @@ export class ShaderEngine {
     if (!prog) return this.canvas
 
     // Resize if needed
-    if (this.canvas.width !== source.videoWidth && source.videoWidth) {
-      this.canvas.width = source.videoWidth || source.width
-      this.canvas.height = source.videoHeight || source.height
+    // (source is the video, or the mirrored frame canvas)
+    const srcW = source.videoWidth || source.width
+    const srcH = source.videoHeight || source.height
+    if (srcW && (this.canvas.width !== srcW || this.canvas.height !== srcH)) {
+      this.canvas.width = srcW
+      this.canvas.height = srcH
     }
 
     gl.viewport(0, 0, this.canvas.width, this.canvas.height)
