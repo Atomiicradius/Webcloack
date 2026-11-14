@@ -1,0 +1,610 @@
+/* ═══════════════════════════════════════════════════════════════════
+   WIN98 COMPONENT KIT — every class is prefixed w98-
+   Hard 1-2px bevels only: no blur, no soft shadows, no gradients.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Bevel utilities ─────────────────────────────────────────────── */
+.w98-raised {
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.w98-sunken {
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-etched {
+  border: 2px groove var(--win-light);
+}
+
+/* Shared focus ring: Win98 dotted rectangle */
+.w98-focus-ring:focus-visible,
+.w98-btn:focus-visible .w98-btn__inner,
+.w98-tool:focus-visible .w98-tool__inner {
+  outline: 1px dotted var(--black);
+  outline-offset: 1px;
+}
+
+/* ── Window ──────────────────────────────────────────────────────── */
+.w98-window {
+  display: flex;
+  flex-direction: column;
+  padding: 3px;
+  color: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  line-height: 1.1;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--white);
+}
+
+.w98-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 2px 3px 2px 4px;
+  background: var(--navy-title);
+  color: var(--white);
+}
+
+.w98-titlebar__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.w98-titlebar__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.w98-titlebar__controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Small title-bar buttons (real ones, e.g. "?") */
+.w98-titlebar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 4px;
+  border: 0;
+  color: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui-min);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.w98-titlebar__btn:active {
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.w98-titlebar__btn:focus-visible {
+  outline: 1px dotted var(--white);
+  outline-offset: 1px;
+}
+
+/* Decorative min/max/close: drawn inactive so they never read as working controls */
+.w98-titlebar__deco {
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.w98-titlebar__deco span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  color: var(--win-shadow);
+  font-size: var(--text-ui-min);
+  line-height: 1;
+}
+
+.w98-window__body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.w98-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+/* ── Button ──────────────────────────────────────────────────────── */
+.w98-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  color: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  line-height: 1;
+  cursor: pointer;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.w98-btn__inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+}
+
+.w98-btn:active:not(:disabled),
+.w98-btn[aria-pressed='true'] {
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.w98-btn:active:not(:disabled) .w98-btn__inner,
+.w98-btn[aria-pressed='true'] .w98-btn__inner {
+  transform: translate(1px, 1px);
+}
+
+.w98-btn:focus-visible {
+  outline: none;
+}
+
+/* Default (primary) button: Win98 draws a 1px black frame around it */
+.w98-btn--default {
+  outline: 1px solid var(--black);
+  outline-offset: 0;
+}
+
+.w98-btn--default:focus-visible {
+  outline: 1px solid var(--black);
+}
+
+.w98-btn--block {
+  width: 100%;
+}
+
+.w98-btn:disabled {
+  color: var(--win-shadow);
+  text-shadow: 1px 1px 0 var(--white);
+  cursor: default;
+}
+
+/* ── ToolButton ──────────────────────────────────────────────────── */
+.w98-tool {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: stretch;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  color: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui-min);
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.w98-tool__inner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 6px 4px;
+  text-align: center;
+}
+
+.w98-tool__icon {
+  display: inline-flex;
+}
+
+.w98-tool__label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.w98-tool__hint {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: var(--win-shadow);
+  font-size: var(--text-ui-min);
+  line-height: 1;
+}
+
+.w98-tool--row .w98-tool__inner {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding: 4px 10px;
+}
+
+.w98-tool:active,
+.w98-tool[aria-pressed='true'] {
+  background: var(--win-light);
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-dark),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-shadow);
+}
+
+.w98-tool:active .w98-tool__inner,
+.w98-tool[aria-pressed='true'] .w98-tool__inner {
+  transform: translate(1px, 1px);
+}
+
+.w98-tool:focus-visible {
+  outline: none;
+}
+
+.w98-tool:disabled {
+  color: var(--win-shadow);
+  cursor: default;
+}
+
+/* ── Panel / Groupbox / StatusField ──────────────────────────────── */
+.w98-panel {
+  padding: var(--space-2);
+}
+
+.w98-panel--raised {
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+.w98-panel--sunken {
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-panel--etched {
+  border: 2px groove var(--win-light);
+}
+
+.w98-panel--dark {
+  background: var(--black);
+  color: var(--mint);
+}
+
+.w98-group {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-2) var(--space-2) var(--space-2);
+  border: 2px groove var(--win-light);
+}
+
+.w98-group__legend {
+  padding: 0 4px;
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+}
+
+.w98-statusfield {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: var(--text-ui-min);
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-shadow);
+}
+
+.w98-statusfield--grow {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Slider ──────────────────────────────────────────────────────── */
+.w98-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.w98-slider__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.w98-slider__input {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.w98-slider__input:focus-visible {
+  outline: 1px dotted var(--black);
+  outline-offset: 0;
+}
+
+.w98-slider__input::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--white);
+  box-shadow:
+    inset 1px 1px var(--win-shadow),
+    inset -1px -1px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-slider__input::-moz-range-track {
+  height: 4px;
+  background: var(--white);
+  box-shadow:
+    inset 1px 1px var(--win-shadow),
+    inset -1px -1px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-slider__input::-webkit-slider-thumb {
+  width: 12px;
+  height: 22px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 0;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.w98-slider__input::-moz-range-thumb {
+  width: 12px;
+  height: 22px;
+  border: 0;
+  border-radius: 0;
+  background: var(--win-gray);
+  box-shadow:
+    inset -1px -1px var(--win-dark),
+    inset 1px 1px var(--white),
+    inset -2px -2px var(--win-shadow),
+    inset 2px 2px var(--win-light);
+}
+
+/* ── Checkbox / Radio ────────────────────────────────────────────── */
+.w98-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  cursor: pointer;
+}
+
+/* Native input stays in the a11y tree and keyboard order, visually hidden */
+.w98-check__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.w98-check__box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  background: var(--white);
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-check__input:checked + .w98-check__box::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--black);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.w98-check--radio .w98-check__box {
+  border-radius: 50%;
+}
+
+.w98-check--radio .w98-check__input:checked + .w98-check__box::after {
+  top: 5px;
+  left: 5px;
+  width: 6px;
+  height: 6px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--black);
+  transform: none;
+}
+
+.w98-check__input:focus-visible ~ .w98-check__label {
+  outline: 1px dotted var(--black);
+  outline-offset: 1px;
+}
+
+.w98-check__input:disabled ~ .w98-check__label {
+  color: var(--win-shadow);
+  text-shadow: 1px 1px 0 var(--white);
+}
+
+/* ── ProgressBar ─────────────────────────────────────────────────── */
+.w98-progress {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 24px;
+  padding: 4px;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow:
+    inset -1px -1px var(--white),
+    inset 1px 1px var(--win-shadow),
+    inset -2px -2px var(--win-light),
+    inset 2px 2px var(--win-dark);
+}
+
+.w98-progress__block {
+  flex: 0 0 10px;
+  height: 100%;
+  background: var(--navy-title);
+}
+
+.w98-progress--indeterminate .w98-progress__runner {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  display: flex;
+  gap: 2px;
+  animation: w98-progress-run var(--dur-progress) steps(16, end) infinite;
+}
+
+/* `left` is relative to the bar width, so the runner always crosses fully */
+@keyframes w98-progress-run {
+  from { left: -60px; }
+  to { left: 100%; }
+}
+
+/* ── MessageBox ──────────────────────────────────────────────────── */
+.w98-msgbox {
+  width: min(440px, 100%);
+}
+
+.w98-msgbox__content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-3);
+}
+
+.w98-msgbox__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.w98-msgbox__message {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-ui);
+  line-height: 1.15;
+}
+
+.w98-msgbox__message p + p {
+  margin-top: var(--space-2);
+}
+
+.w98-msgbox__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+/* ── Touch: bigger hit targets ───────────────────────────────────── */
+@media (pointer: coarse) {
+  .w98-btn,
+  .w98-tool,
+  .w98-check,
+  .w98-titlebar__btn {
+    min-height: var(--hit-min);
+  }
+
+  .w98-titlebar__btn {
+    min-width: var(--hit-min);
+  }
+
+  .w98-slider__input {
+    height: var(--hit-min);
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .w98-progress--indeterminate .w98-progress__runner {
+    left: 4px;
+    animation: none;
+  }
+}
