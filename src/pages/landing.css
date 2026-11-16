@@ -550,8 +550,49 @@
 }
 
 .lp-how__inner {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Wide screens: pinned, so the section is exactly one viewport tall and the
+   content fills it: heading at the top, the three panels stretch to the
+   bottom. The wells flex; the art is contained, and its black background
+   screen-blends into the dark well, so the letterbox is invisible. */
+@media (min-width: 900px) and (min-height: 600px) {
+  .lp-how {
+    height: 100svh;
+    padding-top: 72px;
+    padding-bottom: 48px;
+    overflow: hidden;
+  }
+
+  .lp-how__inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1340px;
+  }
+
+  .lp-how .lp-sec-head {
+    flex: 0 0 auto;
+    margin-bottom: 28px;
+  }
+
+  .lp-how__steps {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .lp-how .lp-step__well {
+    flex: 1 1 auto;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .lp-how .lp-step__img {
+    object-fit: contain;
+  }
 }
 
 .lp-how__steps {
@@ -569,29 +610,35 @@
   padding: 12px 12px 18px;
 }
 
-/* Thin glowing connector with an arrow head between steps */
-.lp-step:not(:last-child)::after {
+/* Connector to the next step: a glowing line that draws, then an arrow
+   head (real elements so GSAP can animate them). */
+.lp-step__link {
   position: absolute;
   top: 34%;
-  left: calc(100% + 6px);
-  width: 36px;
+  left: 100%;
+  display: flex;
+  align-items: center;
+  width: 48px;
+  height: 12px;
+  padding: 0 4px 0 6px;
+  pointer-events: none;
+}
+
+.lp-step__line {
+  flex: 1 1 auto;
   height: 2px;
   background: linear-gradient(90deg, rgba(158, 192, 255, 0), var(--white));
   box-shadow: 0 0 8px rgba(158, 192, 255, 0.9);
-  content: "";
+  transform-origin: left center;
 }
 
-.lp-step:not(:last-child)::before {
-  position: absolute;
-  top: calc(34% - 4px);
-  left: calc(100% + 36px);
+.lp-step__head {
   width: 0;
   height: 0;
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
   border-left: 7px solid var(--white);
   filter: drop-shadow(0 0 4px rgba(158, 192, 255, 0.9));
-  content: "";
 }
 
 /* Opaque dark well: the screen blend needs a solid backdrop inside the
@@ -601,6 +648,10 @@
   border-radius: 6px;
   background: var(--abyss);
   aspect-ratio: 900 / 678;
+}
+
+.lp-step__img {
+  will-change: transform;
 }
 
 .lp-step__img {
@@ -879,17 +930,21 @@
   }
 
   /* Connectors run downwards between stacked steps */
-  .lp-step:not(:last-child)::after {
-    top: calc(100% + 6px);
-    left: 50%;
+  .lp-step__link {
+    top: 100%;
+    left: calc(50% - 6px);
+    flex-direction: column;
+    width: 12px;
+    height: 44px;
+    padding: 6px 0 4px;
+  }
+
+  .lp-step__line {
     width: 2px;
-    height: 26px;
     background: linear-gradient(180deg, rgba(158, 192, 255, 0), var(--white));
   }
 
-  .lp-step:not(:last-child)::before {
-    top: calc(100% + 32px);
-    left: calc(50% - 4px);
+  .lp-step__head {
     border-top: 7px solid var(--white);
     border-right: 5px solid transparent;
     border-bottom: 0;

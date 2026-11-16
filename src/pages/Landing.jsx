@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ScrollSmoother } from 'gsap/ScrollSmoother'
 import { SplitText } from 'gsap/SplitText'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { FILTERS } from '../engine/filters.js'
@@ -36,7 +37,7 @@ import HowItWorks from './landing/HowItWorks.jsx'
 import FilterCarousel from './landing/FilterCarousel.jsx'
 import './landing.css'
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText, MotionPathPlugin)
+gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollSmoother, SplitText, MotionPathPlugin)
 
 const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
 
@@ -89,10 +90,36 @@ export default function Landing() {
     mm.add(
       {
         motion: '(prefers-reduced-motion: no-preference)',
+        wide: '(min-width: 900px) and (min-height: 600px)',
       },
       (ctx) => {
-        const { motion } = ctx.conditions
-        if (!motion) return // static final state from CSS
+        const { motion, wide } = ctx.conditions
+        if (!motion) return // static final state from CSS, native scroll
+
+        // ── Smooth scrolling (created before any ScrollTrigger) ──
+        // Native scroll position still drives it, so keyboard, wheel and
+        // scrollbar work; touch stays native (smoothTouch off).
+        const smoother = ScrollSmoother.create({
+          wrapper: root.current.querySelector('.lp-smooth'),
+          content: root.current.querySelector('.lp-smooth__content'),
+          smooth: 1.1,
+          effects: false,
+        })
+        // In-page links: let the smoother scroll (content is transformed),
+        // then move focus to the target like a native anchor jump would.
+        const onAnchor = (e) => {
+          const link = e.target.closest('a[href^="#"]')
+          if (!link) return
+          const target = root.current.querySelector(link.getAttribute('href'))
+          if (!target) return
+          e.preventDefault()
+          smoother.scrollTo(target, true, 'top top')
+          history.replaceState(null, '', link.getAttribute('href'))
+          if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+          target.focus({ preventScroll: true })
+        }
+        const rootEl = root.current
+        rootEl.addEventListener('click', onAnchor)
 
         // ── Hero intro ───────────────────────────────────────────
         const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
@@ -222,16 +249,55 @@ export default function Landing() {
         }
         hero.addEventListener('pointermove', onMove)
 
-        // ── Lower sections: plain scroll reveals (no pinning, no dead space) ──
-        gsap.utils.toArray('.lp-sec-head').forEach((head) => {
-          gsap.from(head, {
-            y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
-            scrollTrigger: { trigger: head, start: 'top 85%' },
+        // ── How it works ─────────────────────────────────────────
+        if (wide) {
+          // Pinned at exactly one viewport tall, scrubbed over ~175% of a
+          // viewport: heading, then each panel, its illustration settling,
+          // and the connector drawing to the next one.
+          const how = gsap.timeline({
+            defaults: { ease: 'power2.out' },
+            scrollTrigger: {
+              trigger: '.lp-how',
+              start: 'top top',
+              end: '+=175%',
+              pin: true,
+              scrub: 0.8,
+              anticipatePin: 1,
+            },
           })
-        })
-        gsap.from('.lp-step', {
-          y: 60, opacity: 0, duration: 0.7, ease: 'power3.out', stagger: 0.16, clearProps: 'transform,opacity',
-          scrollTrigger: { trigger: '.lp-how__steps', start: 'top 80%' },
+          how.from('.lp-how .lp-sec-head', { y: 40, opacity: 0, duration: 0.6 })
+          gsap.utils.toArray('.lp-step').forEach((step, i) => {
+            const at = 0.5 + i * 1.1
+            how.from(step, { x: -70, y: 30, opacity: 0, duration: 0.8 }, at)
+              .from(step.querySelector('.lp-step__img'), {
+                scale: 1.14, filter: 'brightness(1.8) saturate(1.3)', duration: 0.8, ease: 'power1.out',
+              }, at + 0.15)
+              .fromTo(step.querySelector('.lp-step__well'),
+                { boxShadow: '0 0 34px rgba(158, 192, 255, 0.85)' },
+                { boxShadow: '0 0 0px rgba(158, 192, 255, 0)', duration: 0.8 }, at + 0.15)
+            const line = step.querySelector('.lp-step__line')
+            if (line) {
+              how.from(line, { scaleX: 0, duration: 0.4, ease: 'none' }, at + 0.75)
+                .from(step.querySelector('.lp-step__head'), { opacity: 0, scale: 0, duration: 0.15 }, at + 1.1)
+            }
+          })
+          how.to({}, { duration: 0.3 }) // brief hold on the finished state
+        } else {
+          gsap.from('.lp-how .lp-sec-head', {
+            y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
+            scrollTrigger: { trigger: '.lp-how', start: 'top 85%' },
+          })
+          gsap.utils.toArray('.lp-step').forEach((step) => {
+            gsap.from(step, {
+              y: 50, opacity: 0, duration: 0.7, ease: 'power3.out', clearProps: 'transform,opacity',
+              scrollTrigger: { trigger: step, start: 'top 85%' },
+            })
+          })
+        }
+
+        gsap.from('.lp-filters .lp-sec-head', {
+          y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
+          scrollTrigger: { trigger: '.lp-filters', start: 'top 85%' },
         })
         gsap.from('.lp-card', {
           y: 50, opacity: 0, duration: 0.6, ease: 'power3.out', stagger: 0.07, clearProps: 'transform,opacity',
@@ -242,7 +308,10 @@ export default function Landing() {
           scrollTrigger: { trigger: '.lp-final', start: 'top 75%' },
         })
 
-        return () => hero.removeEventListener('pointermove', onMove)
+        return () => {
+          hero.removeEventListener('pointermove', onMove)
+          rootEl.removeEventListener('click', onAnchor)
+        }
       },
       root.current,
     )
@@ -281,10 +350,12 @@ export default function Landing() {
     <div className="lp" ref={root}>
       <div className="lp-flash" aria-hidden="true" />
 
+      <div className="lp-smooth">
+      <div className="lp-smooth__content">
       <header className="lp-nav">
         <a className="lp-nav__brand" href="#top">webcloak.exe</a>
         <nav className="lp-nav__links" aria-label="sections">
-          <a href="#how">how it works</a>
+          <a href="#how-it-works">how it works</a>
           <a href="#filters">filters</a>
           <a href={REPO_URL} target="_blank" rel="noreferrer">github</a>
         </nav>
@@ -346,7 +417,7 @@ export default function Landing() {
                 >
                   <span aria-hidden="true">▶</span> launch cloak.exe
                 </button>
-                <a className="lp-link" href="#how">how it works ↓</a>
+                <a className="lp-link" href="#how-it-works">how it works ↓</a>
               </div>
               <p className="lp-note">runs in your browser. nothing is uploaded.</p>
             </div>
@@ -389,6 +460,8 @@ export default function Landing() {
         <span>webcloak. made with mediapipe, webgl and react.</span>
         <a href={REPO_URL} target="_blank" rel="noreferrer">source on github</a>
       </footer>
+      </div>
+      </div>
     </div>
   )
 }
