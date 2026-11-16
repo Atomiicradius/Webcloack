@@ -9,9 +9,7 @@
 import { memo } from 'react'
 import { FILTERS } from '../../engine/filters.js'
 import { GelOrb } from '../chrome/Decor.jsx'
-
-// Hue shifts stay inside the blue family (aqua ... violet)
-const HUES = [0, -40, 40, -20, 24, -55, 55]
+import { orbHue } from '../chrome/orbHues.js'
 
 function FilterDock({ activeFilter, onSelect }) {
   return (
@@ -34,7 +32,7 @@ function FilterDock({ activeFilter, onSelect }) {
                 data-boot-in
               >
                 <span className="ap-orb__ball">
-                  <GelOrb hue={HUES[i % HUES.length]} className="ap-orb__img" />
+                  <GelOrb hue={orbHue(i)} className="ap-orb__img" />
                   <span className="ap-orb__icon" aria-hidden="true"><Icon size={26} /></span>
                 </span>
                 <span className="ap-orb__label" aria-hidden="true">{f.short}</span>

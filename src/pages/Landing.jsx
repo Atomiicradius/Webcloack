@@ -34,7 +34,7 @@ import LiquidBlob from './landing/LiquidBlob.jsx'
 import GlowRingHalf from './landing/GlowRing.jsx'
 import { RING_BEADS, RING_PATH } from './landing/ringGeometry.js'
 import HowItWorks from './landing/HowItWorks.jsx'
-import FilterCarousel from './landing/FilterCarousel.jsx'
+import FilterShowcase from './landing/FilterShowcase.jsx'
 import './landing.css'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollSmoother, SplitText, MotionPathPlugin)
@@ -299,9 +299,15 @@ export default function Landing() {
           y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
           scrollTrigger: { trigger: '.lp-filters', start: 'top 85%' },
         })
-        gsap.from('.lp-card', {
-          y: 50, opacity: 0, duration: 0.6, ease: 'power3.out', stagger: 0.07, clearProps: 'transform,opacity',
-          scrollTrigger: { trigger: '.lp-carousel', start: 'top 85%' },
+        // Filters: stage rises in, orbs pop in (each orb is its own blend
+        // element, so animating it never isolates the screen blend)
+        gsap.from('.lp-fx__stage', {
+          y: 50, opacity: 0, duration: 0.8, ease: 'power3.out', clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: '.lp-fx', start: 'top 80%' },
+        })
+        gsap.from('.lp-orb', {
+          y: 30, scale: 0.6, opacity: 0, duration: 0.6, ease: 'back.out(1.8)', stagger: 0.06, clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: '.lp-fx', start: 'top 75%' },
         })
         gsap.from('.lp-final__stage, .lp-final__text, .lp-final .lp-launch', {
           y: 40, opacity: 0, duration: 0.7, ease: 'power3.out', stagger: 0.12,
@@ -434,7 +440,7 @@ export default function Landing() {
 
         <HowItWorks />
 
-        <FilterCarousel />
+        <FilterShowcase />
 
         {/* ── Final call to action ───────────────────────────────── */}
         <section className="lp-final" aria-labelledby="lp-final-title">
