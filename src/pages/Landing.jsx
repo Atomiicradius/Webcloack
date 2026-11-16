@@ -27,9 +27,9 @@ import { FILTERS } from '../engine/filters.js'
 import { loadCameraApp } from '../routes.js'
 import { Window } from '../components/win98/Window.jsx'
 import {
-  ChromeLogo, GelOrb, GridFloor, OrbitStar, Sparkle, Ticker, WireGlobe,
+  ChromeLogo, GelOrb, GridFloor, Sparkle, Ticker, WireGlobe,
 } from '../components/chrome/Decor.jsx'
-import { floorY } from '../components/chrome/decorAssets.js'
+import { ART, floorY } from '../components/chrome/decorAssets.js'
 import './landing.css'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText)
@@ -48,14 +48,26 @@ const TICKER = [
 
 // Hand-placed sparkles: [left %, top %, size px, colour]
 const SPARKLES = [
-  [12, 18, 34, 'var(--white)'],
-  [84, 14, 22, 'var(--ice)'],
-  [76, 70, 40, 'var(--white)'],
-  [20, 74, 20, 'var(--ice)'],
-  [60, 8, 16, 'var(--white)'],
-  [6, 46, 18, 'var(--white)'],
-  [93, 44, 26, 'var(--white)'],
+  [24, 16, 30, 'var(--white)'],
+  [71, 10, 20, 'var(--ice)'],
+  [62, 78, 36, 'var(--white)'],
+  [33, 70, 18, 'var(--ice)'],
+  [50, 6, 14, 'var(--white)'],
+  [8, 62, 20, 'var(--white)'],
+  [88, 52, 24, 'var(--white)'],
 ]
+
+/** One screen-blended art layer. The wrapper is the outermost animated
+ *  element (parallax), so it carries the blend; the img inside floats. */
+function ArtLayer({ art, className, depth }) {
+  return (
+    <div className={`lp-art ch-screen ${className}`} data-depth={depth} aria-hidden="true">
+      <span className="lp-art__tilt">
+        <img className="lp-art__img" src={art.src} width={art.w} height={art.h} alt="" decoding="async" draggable="false" />
+      </span>
+    </div>
+  )
+}
 
 // Filter windows in the draggable playground (from the single registry)
 const PLAYGROUND = [
@@ -142,7 +154,9 @@ export default function Landing() {
         intro
           .from('.lp-hero__globe', { opacity: 0, scale: 0.55, duration: 1.3 })
           .from('.lp-floor', { opacity: 0, yPercent: 30, duration: 1.1 }, 0)
-          .from('.lp-hero__orbit', { opacity: 0, scale: 0.4, rotation: -90, duration: 1.2 }, 0.2)
+          .from('.lp-art__img', {
+            opacity: 0, y: 60, scale: 0.9, duration: 1.1, stagger: 0.12, ease: 'power3.out',
+          }, 0.2)
           .from('.lp-hero__logo', { yPercent: -180, opacity: 0, duration: 0.9, ease: 'back.out(1.8)' }, 0.35)
           .fromTo('.lp-flash', { opacity: 0 }, { opacity: 0.7, duration: 0.05, ease: 'none', yoyo: true, repeat: 1 }, '-=0.28')
           .from('.lp-kicker', { opacity: 0, y: -12, duration: 0.4 }, '<')
@@ -168,10 +182,14 @@ export default function Landing() {
             { scaleX: 0.002, duration: 14, ease: 'sine.in', yoyo: true, repeat: -1, transformOrigin: '50% 50%' },
           ).totalTime(i * (28 / 6))
         })
-        // Orbit ring: dashes travel continuously, orbit star spins
+        // Orbit ring: dashes travel continuously
         gsap.to('.lp-hero__globe .ch-globe__ring-dash', { strokeDashoffset: -180, duration: 5, ease: 'none', repeat: -1 })
-        gsap.to('.lp-hero__orbit img', { rotation: 360, duration: 36, ease: 'none', repeat: -1 })
-        gsap.to('.lp-hero__orbit', { y: -14, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 })
+        // Art layers bob gently, out of phase
+        gsap.utils.toArray('.lp-art__img').forEach((img, i) => {
+          gsap.to(img, {
+            y: i % 2 ? 10 : -12, duration: 3.4 + i * 0.5, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 1.6 + i * 0.2,
+          })
+        })
         // Sparkles twinkle with staggered scale loops
         gsap.fromTo('.lp-spark',
           { scale: 0.45, opacity: 0.5, rotation: 0 },
@@ -289,7 +307,7 @@ export default function Landing() {
     if (heroVisible) {
       tl.to('.lp-hero__copy > *, .lp-chip, .lp-nav', { opacity: 0, scale: 1.15, duration: 0.35, ease: 'power2.in' }, 0.05)
         .to('.lp-hero__globe', { scale: 7, duration: 0.8, ease: 'power3.in' }, 0.05)
-        .to('.lp-hero__orbit, .lp-sparks', { scale: 2.4, opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.05)
+        .to('.lp-art, .lp-sparks', { scale: 1.6, opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.05)
     }
     tl.to('.lp-flash', { opacity: 1, duration: 0.28, ease: 'power1.in' }, heroVisible ? 0.55 : 0.1)
   })
@@ -315,12 +333,13 @@ export default function Landing() {
           <div className="lp-floor"><GridFloor /></div>
 
           <div className="lp-hero__stage">
-            <div className="lp-hero__globe-wrap" data-depth="0.5">
+            <ArtLayer art={ART.bust} className="lp-art--bust" depth="0.7" />
+            <div className="lp-hero__globe-wrap" data-depth="0.4">
               <div className="lp-hero__globe"><WireGlobe ring /></div>
             </div>
-            <div className="lp-hero__orbit-wrap ch-screen" data-depth="1.1">
-              <div className="lp-hero__orbit"><OrbitStar /></div>
-            </div>
+            <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="1.3" />
+            <ArtLayer art={ART.chromeBlob} className="lp-art--blob" depth="1.6" />
+            <ArtLayer art={ART.sticker} className="lp-art--sticker" depth="1.9" />
             <div className="lp-sparks" data-depth="1.6" aria-hidden="true">
               {SPARKLES.map(([x, y, size, color]) => (
                 <span key={`${x}-${y}`} className="lp-spark-pos" style={{ left: `${x}%`, top: `${y}%` }}>

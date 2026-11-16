@@ -77,11 +77,15 @@
 }
 
 /* ── Hero ────────────────────────────────────────────────────────── */
+/* GSAP owns transform (and resets the individual translate / rotate /
+   scale properties) on animated elements, so static offsets here use
+   margins and static tilts live on non-animated inner wrappers. */
 .lp-hero {
+  --globe: min(84svh, 62vw);
+  --logo-w: clamp(300px, 60vw, 1120px);
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: max(680px, 100svh);
+  height: 100svh;
+  min-height: 640px;
   overflow: hidden;
   background:
     linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
@@ -94,23 +98,23 @@
   right: 0;
   bottom: 0;
   left: 0;
-  height: 30%;
+  height: 32%;
   -webkit-mask-image: linear-gradient(180deg, transparent, #000 35%);
   mask-image: linear-gradient(180deg, transparent, #000 35%);
 }
 
 .lp-hero__stage {
-  position: relative;
-  width: min(1180px, 100%);
-  height: max(680px, 100svh);
+  position: absolute;
+  inset: 0;
 }
 
 .lp-hero__globe-wrap {
   position: absolute;
-  inset: 0;
-  width: min(660px, 92vw);
-  height: min(660px, 92vw);
-  margin: auto;
+  top: 47%;
+  left: 50%;
+  width: var(--globe);
+  height: var(--globe);
+  margin: calc(var(--globe) / -2) 0 0 calc(var(--globe) / -2);
 }
 
 .lp-hero__globe {
@@ -118,11 +122,57 @@
   height: 100%;
 }
 
-.lp-hero__orbit-wrap {
+/* ── Art layers (real images, screen-blended on the wrapper) ─────── */
+.lp-art {
   position: absolute;
-  top: 9%;
-  right: 6%;
-  width: min(270px, 36vw);
+  pointer-events: none;
+  user-select: none;
+}
+
+.lp-art__tilt {
+  display: block;
+}
+
+.lp-art__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Bust: right edge, cropped by the viewport */
+.lp-art--bust {
+  right: max(-9vw, -150px);
+  bottom: -1svh;
+  width: min(70svh, 40vw);
+}
+
+/* cloak.exe window: upper left, tilted */
+.lp-art--window {
+  top: 13%;
+  left: 1.5vw;
+  width: min(25vw, 400px);
+}
+
+.lp-art--window .lp-art__tilt {
+  transform: rotate(-7deg);
+}
+
+/* Liquid chrome blob: bottom left */
+.lp-art--blob {
+  bottom: 2svh;
+  left: -4vw;
+  width: min(33vw, 560px);
+}
+
+/* Barcode sticker: bottom right, over the bust's shoulder */
+.lp-art--sticker {
+  right: 3vw;
+  bottom: 7svh;
+  width: min(16vw, 250px);
+}
+
+.lp-art--sticker .lp-art__tilt {
+  transform: rotate(9deg);
 }
 
 .lp-sparks {
@@ -135,8 +185,9 @@
   position: absolute;
 }
 
+/* ── Copy ────────────────────────────────────────────────────────── */
 /* No z-index here: it would isolate the screen-blended logo (DOM order
-   already paints the copy above the globe). */
+   already paints the copy above the globe and art). */
 .lp-hero__copy {
   position: absolute;
   inset: 0;
@@ -144,7 +195,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 96px 16px 48px;
+  padding: 72px 16px 40px;
   text-align: center;
 }
 
@@ -155,24 +206,26 @@
 }
 
 /* Dark halo behind the screen-blended logo so it keeps contrast over the
-   globe lines (screen can only lighten). */
+   globe lines and the art (screen can only lighten). */
 .lp-hero__copy::before {
   position: absolute;
-  top: 50%;
+  top: 47%;
   left: 50%;
-  width: min(760px, 100vw);
-  height: 360px;
+  width: calc(var(--logo-w) * 1.08);
+  height: calc(var(--logo-w) * 0.44);
+  margin: calc(var(--logo-w) * -0.29) 0 0 calc(var(--logo-w) * -0.54);
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(6, 12, 60, 0.85), rgba(6, 12, 60, 0));
   content: "";
-  translate: -50% -62%;
   pointer-events: none;
 }
 
+/* The 2:1 logo image has empty bands above and below the wordmark;
+   negative margins pull the kicker and tagline in. */
 .lp-hero__logo {
   position: relative;
-  width: min(620px, 88vw);
-  margin: 0;
+  width: var(--logo-w);
+  margin: calc(var(--logo-w) * -0.1) 0 calc(var(--logo-w) * -0.11);
 }
 
 .lp-kicker,
@@ -184,7 +237,7 @@
 
 .lp-tagline {
   margin-top: 4px;
-  font-size: clamp(30px, 3.4vw, 42px);
+  font-size: clamp(30px, 3.2vw, 44px);
   line-height: 1.05;
   text-shadow: 2px 2px 0 var(--abyss);
 }
@@ -195,7 +248,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px 28px;
-  margin-top: 28px;
+  margin-top: 26px;
 }
 
 .lp-launch {
@@ -206,12 +259,14 @@
 
 .lp-link {
   font-size: 26px;
+  text-shadow: 2px 2px 0 var(--abyss);
 }
 
 .lp-note {
-  margin-top: 18px;
+  margin-top: 16px;
   color: var(--ice);
   font-size: 22px;
+  text-shadow: 2px 2px 0 var(--abyss);
 }
 
 .lp-chips {
@@ -232,9 +287,66 @@
   white-space: nowrap;
 }
 
-.lp-chip--a { top: 30%; left: 4%; }
-.lp-chip--b { top: 60%; right: 4%; background: var(--white); color: #0A1CA8; border-color: var(--white); }
-.lp-chip--c { bottom: 16%; left: 9%; }
+.lp-chip--a { top: 58%; left: 6vw; }
+.lp-chip--b { top: 13%; right: 31vw; background: var(--white); color: #0A1CA8; border-color: var(--white); }
+.lp-chip--c { bottom: 11%; left: 27vw; }
+
+@media (max-width: 1100px) {
+  .lp-art--window {
+    top: 11%;
+    width: 26vw;
+  }
+
+  .lp-art--bust {
+    width: min(64svh, 44vw);
+  }
+
+  .lp-chip--b { right: 36vw; }
+}
+
+/* Phones: the logo and launch button own the screen; art shrinks or hides */
+@media (max-width: 760px) {
+  .lp-hero {
+    --globe: min(96vw, 70svh);
+    --logo-w: 94vw;
+    height: auto;
+    min-height: 100svh;
+  }
+
+  .lp-hero__stage {
+    position: absolute;
+  }
+
+  .lp-art--window,
+  .lp-art--sticker,
+  .lp-chips {
+    display: none;
+  }
+
+  .lp-art--bust {
+    top: 9svh;
+    right: -18vw;
+    bottom: auto;
+    width: 52vw;
+    opacity: 0.55;
+  }
+
+  .lp-art--blob {
+    bottom: 1svh;
+    left: -16vw;
+    width: 62vw;
+  }
+
+  .lp-hero__copy {
+    position: relative;
+    min-height: 100svh;
+    padding: 110px 16px 64px;
+  }
+
+  .lp-tagline {
+    font-size: 30px;
+  }
+}
 
 /* ── Section headings ────────────────────────────────────────────── */
 .lp-h2 {
@@ -523,15 +635,6 @@
 }
 
 @media (max-width: 699px) {
-  .lp-chips {
-    display: none;
-  }
-
-  .lp-hero__orbit-wrap {
-    top: 12%;
-    right: -4%;
-  }
-
   .lp-playground {
     height: 1040px;
   }
