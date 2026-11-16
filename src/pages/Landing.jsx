@@ -296,7 +296,18 @@ export default function Landing() {
           <div className="lp-floor"><GridFloor /></div>
 
           <div className="lp-hero__stage">
-            <ArtLayer art={ART.bust} className="lp-art--bust" depth="0.7" />
+            {/* Bust: backlight, then the graded chrome (rim light, colour grade and
+                halftone are layered inside the screen-blended wrapper, and the
+                whole stack bobs together). Bottom fades into the grid floor. */}
+            <div className="lp-bust-glow" data-depth="0.45" aria-hidden="true" />
+            <div className="lp-art ch-screen lp-art--bust" data-depth="0.7" aria-hidden="true">
+              <span className="lp-art__tilt lp-art__img lp-bust">
+                <img className="lp-bust__img" src={ART.bust.src} width={ART.bust.w} height={ART.bust.h} alt="" decoding="async" draggable="false" />
+                <span className="lp-bust__grade" />
+                <span className="lp-bust__dots" />
+                <span className="lp-bust__rim" />
+              </span>
+            </div>
             <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="1.3" />
             <div className="lp-art ch-screen lp-art--blob" data-depth="1.6" aria-hidden="true">
               <span className="lp-art__tilt"><LiquidBlob enableShader={LIQUID_SHADER} /></span>

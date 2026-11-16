@@ -140,10 +140,77 @@
 }
 
 /* Bust: right edge, cropped by the viewport */
+/* Bust: large, ~25% bleeding off the right edge, crown slightly cropped,
+   bottom masked into the grid floor so there is no hard cut. */
 .lp-art--bust {
-  right: max(-9vw, -150px);
-  bottom: -1svh;
-  width: min(70svh, 40vw);
+  top: -5svh;
+  right: -12vw;
+  width: min(98svh, 50vw);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 90%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 90%);
+}
+
+/* Cobalt / ice backlight behind the head */
+.lp-bust-glow {
+  position: absolute;
+  top: 4svh;
+  right: -4vw;
+  width: min(80svh, 42vw);
+  height: 78svh;
+  background:
+    radial-gradient(closest-side at 46% 40%, rgba(158, 192, 255, 0.45), rgba(79, 109, 255, 0.3) 45%, rgba(37, 64, 217, 0) 100%);
+  pointer-events: none;
+}
+
+.lp-bust {
+  position: relative;
+}
+
+/* Grade: tame the violet and the hot highlights first ... */
+.lp-bust__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: hue-rotate(-20deg) saturate(1.1) contrast(0.94) brightness(0.88);
+}
+
+/* ... then recolour toward the palette (keeps luminance, black stays black) */
+.lp-bust__grade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(165deg, #9EC0FF 0%, #4F6DFF 42%, #2540D9 100%);
+  mix-blend-mode: color;
+  opacity: 0.72;
+}
+
+/* Faint halftone: multiply, so it only marks the lit chrome */
+.lp-bust__dots {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(6, 12, 60, 0.9) 0 1px, transparent 1.6px) 0 0 / 6px 6px;
+  mix-blend-mode: multiply;
+  opacity: 0.32;
+}
+
+/* Thin ice rim light: the bust's own luminance as a mask, nudged toward
+   the globe and screened on top. Only where luminance masks exist (with
+   alpha masks a JPEG would paint a solid block). */
+.lp-bust__rim {
+  display: none;
+}
+
+@supports (mask-mode: luminance) {
+  .lp-bust__rim {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: #CFE0FF;
+    mask: url('/assets/web/bust.jpg') center / 100% 100% no-repeat luminance;
+    transform: translate(-5px, -2px);
+    filter: blur(1.5px);
+    mix-blend-mode: screen;
+    opacity: 0.55;
+  }
 }
 
 /* cloak.exe window: upper left, tilted */
@@ -165,14 +232,15 @@
 }
 
 /* Barcode sticker: bottom right, over the bust's shoulder */
+/* Barcode sticker: small, on the grid, bottom centre-right */
 .lp-art--sticker {
-  right: 3vw;
-  bottom: 7svh;
-  width: min(16vw, 250px);
+  right: 25vw;
+  bottom: 4svh;
+  width: min(11vw, 170px);
 }
 
 .lp-art--sticker .lp-art__tilt {
-  transform: rotate(9deg);
+  transform: rotate(-8deg);
 }
 
 /* Blob: PNG poster, crossfades to the lazy LiquidMetal shader */
@@ -385,7 +453,7 @@
   }
 
   .lp-art--bust {
-    width: min(64svh, 44vw);
+    width: min(90svh, 54vw);
   }
 
   .lp-chip--a { top: 48%; left: 4vw; }
@@ -413,11 +481,16 @@
   }
 
   .lp-art--bust {
-    top: 9svh;
-    right: -18vw;
-    bottom: auto;
-    width: 52vw;
-    opacity: 0.55;
+    top: 7svh;
+    right: -22vw;
+    width: 62vw;
+    opacity: 0.6;
+  }
+
+  .lp-bust-glow {
+    top: 6svh;
+    width: 60vw;
+    height: 40svh;
   }
 
   .lp-art--blob {
