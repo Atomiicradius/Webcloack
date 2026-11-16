@@ -140,14 +140,15 @@
 }
 
 /* Bust: right edge, cropped by the viewport */
-/* Marble bust: ~42vw, bottom right, bleeding slightly off the right edge,
-   sitting low enough that the bubble clears the logo and the ring. The
+/* Marble bust: ~40vw, lower right, bleeding off the right edge. The logo
+   and globe stay dead centre; the bubble sits just under the wordmark
+   (painted after it in screen blend, so neither hides the other). The
    chest fades into the grid floor. No colour grading: the art is already
    in the palette and the pink bubble is the one warm accent. */
 .lp-art--bust {
-  top: 39svh;
-  right: -2vw;
-  width: 42vw;
+  top: 34svh;
+  right: -4vw;
+  width: 40vw;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
   mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
 }
@@ -295,7 +296,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 72px 8vw 40px 16px;
+  padding: 72px 16px 40px;
   text-align: center;
 }
 
@@ -425,11 +426,11 @@
   .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
 }
 
-/* Shorter screens (e.g. 1280x720): a little smaller and further right so
-   the bubble clears the "how it works" link */
+/* Shorter screens (e.g. 1280x720): a little smaller so the bubble clears
+   the "how it works" link */
 @media (max-height: 800px) and (min-width: 761px) {
   .lp-art--bust {
-    right: -1vw;
+    right: -4vw;
     width: 36vw;
   }
 
@@ -532,43 +533,40 @@
   margin: 0 auto;
 }
 
-/* Wide screens: pinned, so the section is exactly one viewport tall and the
-   content fills it: heading at the top, the three panels stretch to the
-   bottom. The wells flex; the art is contained, and its black background
-   screen-blends into the dark well, so the letterbox is invisible. */
+/* Wide screens: pinned, so the section is exactly one viewport tall. The
+   panels size to their content (art at its natural 4:3) and the whole
+   block is centred vertically. Column width: ~28vw, at most 420px, and
+   capped by the viewport height so short screens still fit. */
 @media (min-width: 900px) and (min-height: 600px) {
   .lp-how {
+    display: flex;
+    align-items: center;
     height: 100svh;
-    padding-top: 72px;
+    padding-top: 48px;
     padding-bottom: 48px;
     overflow: hidden;
   }
 
   .lp-how__inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
     max-width: 1340px;
   }
 
   .lp-how .lp-sec-head {
-    flex: 0 0 auto;
     margin-bottom: 28px;
   }
 
   .lp-how__steps {
-    flex: 1 1 auto;
-    min-height: 0;
+    grid-template-columns: repeat(3, min(28vw, 420px, calc((100svh - 380px) * 1.3)));
+    justify-content: center;
   }
 
-  .lp-how .lp-step__well {
-    flex: 1 1 auto;
-    min-height: 0;
-    aspect-ratio: auto;
+  .lp .lp-filters {
+    padding-top: 40px;
   }
 
-  .lp-how .lp-step__img {
-    object-fit: contain;
+  .lp-how .lp-sec-head {
+    width: calc(3 * min(28vw, 420px, calc((100svh - 380px) * 1.3)) + 96px);
+    max-width: 100%;
   }
 }
 

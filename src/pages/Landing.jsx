@@ -251,8 +251,14 @@ export default function Landing() {
 
         // ── How it works ─────────────────────────────────────────
         if (wide) {
+          // Heading plays in as the section arrives, so the pinned view is
+          // never empty; the scrub then covers the panels.
+          gsap.from('.lp-how .lp-sec-head', {
+            y: 40, opacity: 0, duration: 0.7, ease: 'power2.out',
+            scrollTrigger: { trigger: '.lp-how', start: 'top 70%' },
+          })
           // Pinned at exactly one viewport tall, scrubbed over ~175% of a
-          // viewport: heading, then each panel, its illustration settling,
+          // viewport: each panel, its illustration settling,
           // and the connector drawing to the next one.
           const how = gsap.timeline({
             defaults: { ease: 'power2.out' },
@@ -265,9 +271,8 @@ export default function Landing() {
               anticipatePin: 1,
             },
           })
-          how.from('.lp-how .lp-sec-head', { y: 40, opacity: 0, duration: 0.6 })
           gsap.utils.toArray('.lp-step').forEach((step, i) => {
-            const at = 0.5 + i * 1.1
+            const at = i * 1.1
             how.from(step, { x: -70, y: 30, opacity: 0, duration: 0.8 }, at)
               .from(step.querySelector('.lp-step__img'), {
                 scale: 1.14, filter: 'brightness(1.8) saturate(1.3)', duration: 0.8, ease: 'power1.out',
