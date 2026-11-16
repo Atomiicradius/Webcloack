@@ -11,7 +11,7 @@ export const ASSETS = {
 // Landing art (black backgrounds, screen-blended). Web-sized copies of the
 // originals in public/assets/ (made with resize-art; see the commit notes).
 export const ART = {
-  bust: { src: '/assets/web/bust.jpg', w: 1000, h: 1327 },
+  bust: { src: '/assets/web/bust.jpg', w: 1100, h: 1460 },
   cloakWindow: { src: '/assets/web/cloak-window.jpg', w: 1100, h: 829 },
   chromeBlob: { src: '/assets/web/chrome-blob.jpg', w: 1100, h: 733 },
   sticker: { src: '/assets/web/sticker.jpg', w: 800, h: 533 },

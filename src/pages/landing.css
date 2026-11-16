@@ -140,77 +140,44 @@
 }
 
 /* Bust: right edge, cropped by the viewport */
-/* Bust: large, ~25% bleeding off the right edge, crown slightly cropped,
-   bottom masked into the grid floor so there is no hard cut. */
+/* Marble bust: ~42vw, bottom right, bleeding slightly off the right edge,
+   sitting low enough that the bubble clears the logo and the ring. The
+   chest fades into the grid floor. No colour grading: the art is already
+   in the palette and the pink bubble is the one warm accent. */
 .lp-art--bust {
-  top: -5svh;
-  right: -12vw;
-  width: min(98svh, 50vw);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 90%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 90%);
-}
-
-/* Cobalt / ice backlight behind the head */
-.lp-bust-glow {
-  position: absolute;
-  top: 4svh;
-  right: -4vw;
-  width: min(80svh, 42vw);
-  height: 78svh;
-  background:
-    radial-gradient(closest-side at 46% 40%, rgba(158, 192, 255, 0.45), rgba(79, 109, 255, 0.3) 45%, rgba(37, 64, 217, 0) 100%);
-  pointer-events: none;
+  top: 39svh;
+  right: -2vw;
+  width: 42vw;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
 }
 
 .lp-bust {
   position: relative;
 }
 
-/* Grade: tame the violet and the hot highlights first ... */
 .lp-bust__img {
   display: block;
   width: 100%;
   height: auto;
-  filter: hue-rotate(-20deg) saturate(1.1) contrast(0.94) brightness(0.88);
 }
 
-/* ... then recolour toward the palette (keeps luminance, black stays black) */
-.lp-bust__grade {
+/* Cobalt / ice backlight around the head (screened inside the stack, so
+   it lifts the black around the head without touching the bubble's hue) */
+.lp-bust__glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(165deg, #9EC0FF 0%, #4F6DFF 42%, #2540D9 100%);
-  mix-blend-mode: color;
-  opacity: 0.72;
+  background: radial-gradient(42% 30% at 58% 30%, rgba(79, 109, 255, 0.55), rgba(37, 64, 217, 0.18) 60%, rgba(37, 64, 217, 0) 100%);
+  mix-blend-mode: screen;
 }
 
-/* Faint halftone: multiply, so it only marks the lit chrome */
+/* Very faint halftone (multiply: only marks lit stone) */
 .lp-bust__dots {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle, rgba(6, 12, 60, 0.9) 0 1px, transparent 1.6px) 0 0 / 6px 6px;
   mix-blend-mode: multiply;
-  opacity: 0.32;
-}
-
-/* Thin ice rim light: the bust's own luminance as a mask, nudged toward
-   the globe and screened on top. Only where luminance masks exist (with
-   alpha masks a JPEG would paint a solid block). */
-.lp-bust__rim {
-  display: none;
-}
-
-@supports (mask-mode: luminance) {
-  .lp-bust__rim {
-    position: absolute;
-    inset: 0;
-    display: block;
-    background: #CFE0FF;
-    mask: url('/assets/web/bust.jpg') center / 100% 100% no-repeat luminance;
-    transform: translate(-5px, -2px);
-    filter: blur(1.5px);
-    mix-blend-mode: screen;
-    opacity: 0.55;
-  }
+  opacity: 0.16;
 }
 
 /* cloak.exe window: upper left, tilted */
@@ -234,7 +201,7 @@
 /* Barcode sticker: bottom right, over the bust's shoulder */
 /* Barcode sticker: small, on the grid, bottom centre-right */
 .lp-art--sticker {
-  right: 25vw;
+  right: 37vw;
   bottom: 4svh;
   width: min(11vw, 170px);
 }
@@ -328,7 +295,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 72px 16px 40px;
+  padding: 72px 8vw 40px 16px;
   text-align: center;
 }
 
@@ -452,12 +419,27 @@
     width: 26vw;
   }
 
-  .lp-art--bust {
-    width: min(90svh, 54vw);
-  }
 
   .lp-chip--a { top: 48%; left: 4vw; }
   .lp-chip--b { right: 36vw; }
+  .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
+}
+
+/* Shorter screens (e.g. 1280x720): a little smaller and further right so
+   the bubble clears the "how it works" link */
+@media (max-height: 800px) and (min-width: 761px) {
+  .lp-art--bust {
+    right: -1vw;
+    width: 36vw;
+  }
+
+  /* keep the sticker and the lower tags off the note line */
+  .lp-art--sticker {
+    bottom: 1svh;
+    width: min(8vw, 130px);
+  }
+
+  .lp-chip--a { top: 48%; left: 4vw; }
   .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
 }
 
@@ -481,16 +463,10 @@
   }
 
   .lp-art--bust {
-    top: 7svh;
-    right: -22vw;
-    width: 62vw;
-    opacity: 0.6;
-  }
-
-  .lp-bust-glow {
-    top: 6svh;
-    width: 60vw;
-    height: 40svh;
+    top: auto;
+    right: 0;
+    bottom: -6svh;
+    width: 46vw;
   }
 
   .lp-art--blob {
@@ -503,6 +479,7 @@
     position: relative;
     min-height: 100svh;
     padding: 110px 16px 64px;
+    padding-bottom: 28svh;
   }
 
   .lp-tagline {
