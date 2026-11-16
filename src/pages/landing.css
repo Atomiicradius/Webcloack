@@ -207,6 +207,45 @@
   pointer-events: none;
 }
 
+/* ── Glowing ring (split: back half before the globe, front after logo) ── */
+.lp-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ring);
+  height: var(--ring);
+  margin: calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.lp-ring__tilt {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-14deg);
+  will-change: transform;
+}
+
+/* Static raster, so a CSS bloom costs nothing per frame */
+.lp-ring__glow {
+  filter: drop-shadow(0 0 6px rgba(158, 192, 255, 0.7));
+}
+
+.lp-ring__glow,
+.lp-ring__shine,
+.lp-ring__beads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.lp-ring__shine-path {
+  stroke-dasharray: 70 1070;
+  stroke-dashoffset: 70;
+}
+
 .lp-spark-pos {
   position: absolute;
 }
@@ -231,15 +270,37 @@
   letter-spacing: 6px;
 }
 
+/* Logo stage: centre of the globe and the ring. Its box is the visible
+   wordmark band (the logo's negative margins overflow it), so 50% / 50%
+   is the wordmark centre. No z-index / transform / opacity here: the logo
+   and ring blend through it. */
+.lp-logo-stage {
+  --ring: calc(var(--logo-w) * 1.2);
+  position: relative;
+  width: var(--logo-w);
+  margin-top: 40px;
+}
+
+.lp-logo-stage > .lp-kicker {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  left: 0;
+}
+
+.lp-logo-stage .lp-hero__globe-wrap {
+  top: 50%;
+}
+
 /* Dark halo behind the screen-blended logo so it keeps contrast over the
    globe lines and the art (screen can only lighten). */
-.lp-hero__copy::before {
+.lp-logo-stage::before {
   position: absolute;
-  top: 47%;
+  top: 50%;
   left: 50%;
   width: calc(var(--logo-w) * 1.08);
   height: calc(var(--logo-w) * 0.44);
-  margin: calc(var(--logo-w) * -0.29) 0 0 calc(var(--logo-w) * -0.54);
+  margin: calc(var(--logo-w) * -0.22) 0 0 calc(var(--logo-w) * -0.54);
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(6, 12, 60, 0.85), rgba(6, 12, 60, 0));
   content: "";
@@ -262,7 +323,7 @@
 }
 
 .lp-tagline {
-  margin-top: 4px;
+  margin-top: calc(var(--logo-w) * 0.05);
   font-size: clamp(30px, 3.2vw, 44px);
   line-height: 1.05;
   text-shadow: 2px 2px 0 var(--abyss);

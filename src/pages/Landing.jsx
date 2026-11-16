@@ -23,6 +23,7 @@ import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Draggable } from 'gsap/Draggable'
 import { SplitText } from 'gsap/SplitText'
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { FILTERS } from '../engine/filters.js'
 import { loadCameraApp } from '../routes.js'
 import { Window } from '../components/win98/Window.jsx'
@@ -31,9 +32,11 @@ import {
 } from '../components/chrome/Decor.jsx'
 import { ART, floorY } from '../components/chrome/decorAssets.js'
 import LiquidBlob from './landing/LiquidBlob.jsx'
+import GlowRingHalf from './landing/GlowRing.jsx'
+import { RING_BEADS, RING_PATH } from './landing/ringGeometry.js'
 import './landing.css'
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText)
+gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText, MotionPathPlugin)
 
 const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
 
@@ -166,6 +169,7 @@ export default function Landing() {
           .from('.lp-hero__logo', { yPercent: -180, opacity: 0, duration: 0.9, ease: 'back.out(1.8)' }, 0.35)
           .fromTo('.lp-flash', { opacity: 0 }, { opacity: 0.7, duration: 0.05, ease: 'none', yoyo: true, repeat: 1 }, '-=0.28')
           .from('.lp-kicker', { opacity: 0, y: -12, duration: 0.4 }, '<')
+          .from('.lp-hero .lp-ring', { opacity: 0, scale: 0.75, duration: 1.1, ease: 'power2.out' }, '<')
           .from('.lp-cta > *, .lp-note', { opacity: 0, y: 18, stagger: 0.08, duration: 0.45 }, '+=0.45')
           .from('.lp-chip', { opacity: 0, scale: 0, stagger: 0.08, duration: 0.5, ease: 'back.out(2.2)' }, '<')
 
@@ -188,8 +192,35 @@ export default function Landing() {
             { scaleX: 0.002, duration: 14, ease: 'sine.in', yoyo: true, repeat: -1, transformOrigin: '50% 50%' },
           ).totalTime(i * (28 / 6))
         })
-        // Orbit ring: dashes travel continuously
-        gsap.to('.lp-hero__globe .ch-globe__ring-dash', { strokeDashoffset: -180, duration: 5, ease: 'none', repeat: -1 })
+        // Glowing ring: precess the tilt (both halves in sync), a light
+        // streak travels each arc, beads ride the full loop
+        gsap.to('.lp-hero .lp-ring__tilt', {
+          rotation: -5, scaleY: 1.14, duration: 7.5, ease: 'sine.inOut', yoyo: true, repeat: -1,
+        })
+        gsap.utils.toArray('.lp-hero .lp-ring__shine-path').forEach((path, i) => {
+          gsap.fromTo(path, { strokeDashoffset: 70 }, {
+            strokeDashoffset: -1000, duration: 2.4, ease: 'power1.inOut', repeat: -1, repeatDelay: 2.4, delay: 2 + i * 2.4,
+          })
+        })
+        const ringRaw = MotionPathPlugin.cacheRawPathMeasurements(MotionPathPlugin.getRawPath(RING_PATH))
+        RING_BEADS.forEach((bead, i) => {
+          const back = root.current.querySelector(`.lp-hero .lp-ring--back [data-bead="${i}"]`)
+          const front = root.current.querySelector(`.lp-hero .lp-ring--front [data-bead="${i}"]`)
+          if (!back || !front) return
+          const state = { p: bead.offset }
+          gsap.to(state, {
+            p: bead.offset + 1, duration: bead.speed, ease: 'none', repeat: -1,
+            onUpdate: () => {
+              const pt = MotionPathPlugin.getPositionOnPath(ringRaw, state.p % 1)
+              const t = `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`
+              const inFront = pt.y > 0
+              back.setAttribute('transform', t)
+              front.setAttribute('transform', t)
+              back.setAttribute('opacity', inFront ? 0 : 0.7)
+              front.setAttribute('opacity', inFront ? 1 : 0)
+            },
+          })
+        })
         // Art layers bob gently, out of phase
         gsap.utils.toArray('.lp-art__img').forEach((img, i) => {
           gsap.to(img, {
@@ -311,7 +342,10 @@ export default function Landing() {
     const tl = gsap.timeline({ onComplete: go })
     tl.to(e.currentTarget, { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1, ease: 'power1.inOut' })
     if (heroVisible) {
-      tl.to('.lp-hero__copy > *, .lp-chip, .lp-nav', { opacity: 0, scale: 1.15, duration: 0.35, ease: 'power2.in' }, 0.05)
+      // (never fade the logo stage itself: opacity there would isolate the blend)
+      tl.to('.lp-kicker, .lp-hero__logo, .lp-hero .lp-ring, .lp-tagline, .lp-cta, .lp-note, .lp-chip, .lp-nav', {
+        opacity: 0, scale: 1.15, duration: 0.35, ease: 'power2.in',
+      }, 0.05)
         .to('.lp-hero__globe', { scale: 7, duration: 0.8, ease: 'power3.in' }, 0.05)
         .to('.lp-art, .lp-sparks', { scale: 1.6, opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.05)
     }
@@ -340,9 +374,6 @@ export default function Landing() {
 
           <div className="lp-hero__stage">
             <ArtLayer art={ART.bust} className="lp-art--bust" depth="0.7" />
-            <div className="lp-hero__globe-wrap" data-depth="0.4">
-              <div className="lp-hero__globe"><WireGlobe ring /></div>
-            </div>
             <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="1.3" />
             <div className="lp-art ch-screen lp-art--blob" data-depth="1.6" aria-hidden="true">
               <span className="lp-art__tilt"><LiquidBlob enableShader={LIQUID_SHADER} /></span>
@@ -357,8 +388,16 @@ export default function Landing() {
             </div>
 
             <div className="lp-hero__copy">
-              <p className="lp-kicker">introducing</p>
-              <h1 id="lp-title" className="lp-hero__logo ch-screen"><ChromeLogo /></h1>
+              {/* Paint order inside the stage: back ring, globe, logo, front ring */}
+              <div className="lp-logo-stage">
+                <p className="lp-kicker">introducing</p>
+                <GlowRingHalf side="back" />
+                <div className="lp-hero__globe-wrap" data-depth="0.4">
+                  <div className="lp-hero__globe"><WireGlobe /></div>
+                </div>
+                <h1 id="lp-title" className="lp-hero__logo ch-screen"><ChromeLogo /></h1>
+                <GlowRingHalf side="front" />
+              </div>
               <p className="lp-tagline">
                 your hands are<br />the invisibility cloak.
               </p>
