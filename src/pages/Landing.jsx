@@ -21,22 +21,22 @@ import { useNavigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Draggable } from 'gsap/Draggable'
 import { SplitText } from 'gsap/SplitText'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 import { FILTERS } from '../engine/filters.js'
 import { loadCameraApp } from '../routes.js'
-import { Window } from '../components/win98/Window.jsx'
 import {
-  ChromeLogo, GelOrb, GridFloor, Sparkle, Ticker, WireGlobe,
+  ChromeLogo, GridFloor, Sparkle, Ticker, WireGlobe,
 } from '../components/chrome/Decor.jsx'
 import { ART, floorY } from '../components/chrome/decorAssets.js'
 import LiquidBlob from './landing/LiquidBlob.jsx'
 import GlowRingHalf from './landing/GlowRing.jsx'
 import { RING_BEADS, RING_PATH } from './landing/ringGeometry.js'
+import HowItWorks from './landing/HowItWorks.jsx'
+import FilterCarousel from './landing/FilterCarousel.jsx'
 import './landing.css'
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText, MotionPathPlugin)
+gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText, MotionPathPlugin)
 
 const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
 
@@ -78,61 +78,6 @@ function ArtLayer({ art, className, depth }) {
   )
 }
 
-// Filter windows in the draggable playground (from the single registry)
-const PLAYGROUND = [
-  { id: 'cloak', hue: 0 },
-  { id: 'matrix', hue: -40 },
-  { id: 'thermal', hue: 40 },
-  { id: 'kaleidoscope', hue: -20 },
-].map((p, i) => {
-  const def = FILTERS.find((f) => f.id === p.id)
-  return { ...p, def, index: FILTERS.indexOf(def) + 1, slot: i + 1 }
-})
-
-const STEPS = [
-  {
-    file: 'step1.exe',
-    title: 'raise your hands',
-    text: 'hold both hands up to the camera. webcloak tracks up to four at once.',
-    art: (
-      <svg viewBox="0 0 200 110" className="lp-step__art" aria-hidden="true" focusable="false">
-        <g fill="none" stroke="var(--ice)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M38 96V52M38 52L26 22M38 52l14-30M38 60l-18-6" />
-          <path d="M162 96V52M162 52l12-30M162 52l-14-30M162 60l18-6" />
-        </g>
-        <g fill="var(--white)">
-          <circle cx="26" cy="22" r="6" /><circle cx="52" cy="22" r="6" />
-          <circle cx="148" cy="22" r="6" /><circle cx="174" cy="22" r="6" />
-        </g>
-      </svg>
-    ),
-  },
-  {
-    file: 'step2.exe',
-    title: 'make a frame',
-    text: 'your thumbs and index fingers become the four corners of a window.',
-    art: (
-      <svg viewBox="0 0 200 110" className="lp-step__art" aria-hidden="true" focusable="false">
-        <polygon points="40,22 160,12 172,92 30,98" fill="rgba(158,192,255,0.18)" stroke="var(--white)" strokeWidth="3" strokeDasharray="8 6" />
-        <g fill="var(--white)">
-          <circle cx="40" cy="22" r="7" /><circle cx="160" cy="12" r="7" />
-          <circle cx="172" cy="92" r="7" /><circle cx="30" cy="98" r="7" />
-        </g>
-      </svg>
-    ),
-  },
-  {
-    file: 'step3.exe',
-    title: 'pick a filter',
-    text: 'click one, press 1-7, or pinch quickly to flip through them.',
-    art: (
-      <div className="lp-step__orbs" aria-hidden="true">
-        {[0, -40, 40, -20].map((h) => <GelOrb key={h} hue={h} className="lp-step__orb" />)}
-      </div>
-    ),
-  },
-]
-
 export default function Landing() {
   const root = useRef(null)
   const launching = useRef(false)
@@ -141,21 +86,12 @@ export default function Landing() {
   const { contextSafe } = useGSAP(() => {
     const mm = gsap.matchMedia()
 
-    // ── Draggable filter windows (user-driven, so on for everyone) ──
-    const drags = Draggable.create('.lp-win', {
-      bounds: '.lp-playground',
-      zIndexBoost: true,
-      cursor: 'grab',
-      activeCursor: 'grabbing',
-    })
-
     mm.add(
       {
         motion: '(prefers-reduced-motion: no-preference)',
-        wide: '(min-width: 900px)',
       },
       (ctx) => {
-        const { motion, wide } = ctx.conditions
+        const { motion } = ctx.conditions
         if (!motion) return // static final state from CSS
 
         // ── Hero intro ───────────────────────────────────────────
@@ -192,35 +128,39 @@ export default function Landing() {
             { scaleX: 0.002, duration: 14, ease: 'sine.in', yoyo: true, repeat: -1, transformOrigin: '50% 50%' },
           ).totalTime(i * (28 / 6))
         })
-        // Glowing ring: precess the tilt (both halves in sync), a light
-        // streak travels each arc, beads ride the full loop
-        gsap.to('.lp-hero .lp-ring__tilt', {
-          rotation: -5, scaleY: 1.14, duration: 7.5, ease: 'sine.inOut', yoyo: true, repeat: -1,
-        })
-        gsap.utils.toArray('.lp-hero .lp-ring__shine-path').forEach((path, i) => {
-          gsap.fromTo(path, { strokeDashoffset: 70 }, {
-            strokeDashoffset: -1000, duration: 2.4, ease: 'power1.inOut', repeat: -1, repeatDelay: 2.4, delay: 2 + i * 2.4,
-          })
-        })
+        // Glowing rings (hero + final CTA): precess the tilt of both halves in
+        // sync, a light streak travels each arc, beads ride the full loop
         const ringRaw = MotionPathPlugin.cacheRawPathMeasurements(MotionPathPlugin.getRawPath(RING_PATH))
-        RING_BEADS.forEach((bead, i) => {
-          const back = root.current.querySelector(`.lp-hero .lp-ring--back [data-bead="${i}"]`)
-          const front = root.current.querySelector(`.lp-hero .lp-ring--front [data-bead="${i}"]`)
-          if (!back || !front) return
-          const state = { p: bead.offset }
-          gsap.to(state, {
-            p: bead.offset + 1, duration: bead.speed, ease: 'none', repeat: -1,
-            onUpdate: () => {
-              const pt = MotionPathPlugin.getPositionOnPath(ringRaw, state.p % 1)
-              const t = `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`
-              const inFront = pt.y > 0
-              back.setAttribute('transform', t)
-              front.setAttribute('transform', t)
-              back.setAttribute('opacity', inFront ? 0 : 0.7)
-              front.setAttribute('opacity', inFront ? 1 : 0)
-            },
+        const animateRing = (scope, delay) => {
+          gsap.to(`${scope} .lp-ring__tilt`, {
+            rotation: -5, scaleY: 1.14, duration: 7.5, ease: 'sine.inOut', yoyo: true, repeat: -1,
           })
-        })
+          gsap.utils.toArray(`${scope} .lp-ring__shine-path`).forEach((path, i) => {
+            gsap.fromTo(path, { strokeDashoffset: 70 }, {
+              strokeDashoffset: -1000, duration: 2.4, ease: 'power1.inOut', repeat: -1, repeatDelay: 2.4, delay: delay + i * 2.4,
+            })
+          })
+          RING_BEADS.forEach((bead, i) => {
+            const back = root.current.querySelector(`${scope} .lp-ring--back [data-bead="${i}"]`)
+            const front = root.current.querySelector(`${scope} .lp-ring--front [data-bead="${i}"]`)
+            if (!back || !front) return
+            const state = { p: bead.offset }
+            gsap.to(state, {
+              p: bead.offset + 1, duration: bead.speed, ease: 'none', repeat: -1,
+              onUpdate: () => {
+                const pt = MotionPathPlugin.getPositionOnPath(ringRaw, state.p % 1)
+                const t = `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`
+                const inFront = pt.y > 0
+                back.setAttribute('transform', t)
+                front.setAttribute('transform', t)
+                back.setAttribute('opacity', inFront ? 0 : 0.7)
+                front.setAttribute('opacity', inFront ? 1 : 0)
+              },
+            })
+          })
+        }
+        animateRing('.lp-hero', 2)
+        animateRing('.lp-final', 0.5)
         // Art layers bob gently, out of phase
         gsap.utils.toArray('.lp-art__img').forEach((img, i) => {
           gsap.to(img, {
@@ -273,47 +213,24 @@ export default function Landing() {
         }
         hero.addEventListener('pointermove', onMove)
 
-        // ── How it works: pinned + scrubbed (wide), reveals (narrow) ──
-        const steps = gsap.utils.toArray('.lp-step')
-        if (wide) {
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: '.lp-how',
-              start: 'top top',
-              end: '+=220%',
-              pin: true,
-              scrub: 0.6,
-            },
+        // ── Lower sections: plain scroll reveals (no pinning, no dead space) ──
+        gsap.utils.toArray('.lp-sec-head').forEach((head) => {
+          gsap.from(head, {
+            y: 30, opacity: 0, duration: 0.6, ease: 'power2.out',
+            scrollTrigger: { trigger: head, start: 'top 85%' },
           })
-          steps.forEach((step, i) => {
-            tl.from(step, {
-              xPercent: i % 2 ? 130 : -130,
-              yPercent: 30,
-              rotation: i % 2 ? 10 : -10,
-              opacity: 0,
-              duration: 1,
-              ease: 'power2.out',
-            }, i * 0.9)
-            tl.fromTo(`.lp-how__seg:nth-child(${i + 1})`, { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: 'none' }, i * 0.9 + 0.4)
-          })
-          tl.to({}, { duration: 0.4 }) // hold the last frame briefly
-        } else {
-          steps.forEach((step, i) => {
-            gsap.from(step, {
-              xPercent: i % 2 ? 40 : -40,
-              opacity: 0,
-              duration: 0.6,
-              ease: 'power2.out',
-              scrollTrigger: { trigger: step, start: 'top 85%' },
-            })
-          })
-        }
-
-        // Filter windows drop in once
-        gsap.from('.lp-win__inner', {
-          y: -60, opacity: 0, rotation: () => gsap.utils.random(-14, 14), stagger: 0.12, duration: 0.7,
-          ease: 'back.out(1.6)',
-          scrollTrigger: { trigger: '.lp-playground', start: 'top 75%' },
+        })
+        gsap.from('.lp-step', {
+          y: 60, opacity: 0, duration: 0.7, ease: 'power3.out', stagger: 0.16, clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: '.lp-how__steps', start: 'top 80%' },
+        })
+        gsap.from('.lp-card', {
+          y: 50, opacity: 0, duration: 0.6, ease: 'power3.out', stagger: 0.07, clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: '.lp-carousel', start: 'top 85%' },
+        })
+        gsap.from('.lp-final__stage, .lp-final__text, .lp-final .lp-launch', {
+          y: 40, opacity: 0, duration: 0.7, ease: 'power3.out', stagger: 0.12,
+          scrollTrigger: { trigger: '.lp-final', start: 'top 75%' },
         })
 
         return () => hero.removeEventListener('pointermove', onMove)
@@ -321,10 +238,7 @@ export default function Landing() {
       root.current,
     )
 
-    return () => {
-      drags.forEach((d) => d.kill())
-      mm.revert()
-    }
+    return () => mm.revert()
   }, { scope: root })
 
   // ── Launch: globe zooms, screen flashes white, then /app (boot) ──
@@ -426,71 +340,17 @@ export default function Landing() {
 
         <Ticker items={TICKER} />
 
-        {/* ── How it works (pinned on wide screens) ──────────────── */}
-        <section className="lp-how" id="how" aria-labelledby="lp-how-title">
-          <div className="lp-how__inner">
-            <div className="lp-how__head">
-              <h2 id="lp-how-title" className="lp-h2">how it works</h2>
-              <div className="lp-how__bar" aria-hidden="true">
-                <span className="lp-how__seg" /><span className="lp-how__seg" /><span className="lp-how__seg" />
-              </div>
-            </div>
-            <ol className="lp-how__steps">
-              {STEPS.map((s, i) => (
-                <li key={s.file} className="lp-step" style={{ '--tilt': `${[-2, 1.5, -1][i]}deg` }}>
-                  <Window title={s.file} titleAs="h3" decorativeControls className="lp-step__win">
-                    <div className="lp-step__body">
-                      <div className="lp-step__screen">{s.art}</div>
-                      <p className="lp-step__title"><span className="lp-step__num">{i + 1}.</span> {s.title}</p>
-                      <p className="lp-step__text">{s.text}</p>
-                    </div>
-                  </Window>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+        <HowItWorks />
 
-        {/* ── Filters playground (draggable) ─────────────────────── */}
-        <section className="lp-filters" id="filters" aria-labelledby="lp-filters-title">
-          <div className="lp-filters__head">
-            <h2 id="lp-filters-title" className="lp-h2">filters</h2>
-            <p className="lp-filters__sub">
-              {FILTERS.length} live effects. these four windows can be dragged around.
-            </p>
-          </div>
-          <div className="lp-playground">
-            {PLAYGROUND.map(({ id, hue, def, index, slot }) => {
-              const Icon = def.icon
-              return (
-                <div key={id} className={`lp-win lp-win--${slot}`}>
-                  <div className="lp-win__inner">
-                    <Window title={`${id}.exe`} titleAs="h3" decorativeControls>
-                      <div className="lp-win__body">
-                        <div className="lp-win__orb" aria-hidden="true">
-                          <GelOrb hue={hue} />
-                          <span className="lp-win__icon"><Icon size={26} /></span>
-                        </div>
-                        <div>
-                          <p className="lp-win__name">{def.label.toLowerCase()}</p>
-                          <p className="lp-win__desc">{def.description.toLowerCase()}.</p>
-                          <p className="lp-win__key">key {index}</p>
-                        </div>
-                      </div>
-                    </Window>
-                  </div>
-                </div>
-              )
-            })}
-            <Sparkle size={30} className="lp-playground__spark lp-playground__spark--a" />
-            <Sparkle size={18} color="var(--ice)" className="lp-playground__spark lp-playground__spark--b" />
-          </div>
-        </section>
+        <FilterCarousel />
 
         {/* ── Final call to action ───────────────────────────────── */}
         <section className="lp-final" aria-labelledby="lp-final-title">
-          <div className="lp-final__globe" aria-hidden="true"><WireGlobe /></div>
-          <h2 id="lp-final-title" className="lp-final__title">ready? hands up.</h2>
+          <div className="lp-final__stage">
+            <GlowRingHalf side="back" />
+            <h2 id="lp-final-title" className="lp-final__title">ready? hands up.</h2>
+            <GlowRingHalf side="front" />
+          </div>
           <p className="lp-final__text">the camera only turns on after you press launch. you can stop it any time.</p>
           <button
             type="button"

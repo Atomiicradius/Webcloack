@@ -44,7 +44,6 @@
    Accents only: magenta (ticker, REC), mint / ice highlights.
    ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --cobalt: #2540D9;          /* royal blue */
   --cobalt-mid: #12208F;
   --abyss: #060C3C;           /* deepest navy, outlines + hard shadows */
   --ice: #9EC0FF;             /* pale blue lines, secondary text on dark */

@@ -444,12 +444,30 @@
   text-shadow: 4px 4px 0 var(--abyss);
 }
 
+.lp-sec-head {
+  max-width: 1200px;
+  margin: 0 auto 36px;
+}
+
+.lp-sec-head__sub {
+  margin-top: 10px;
+  color: var(--ice);
+  font-size: 26px;
+}
+
+/* Flat frosted glass: 1px light border, subtle blur, small radius, no
+   heavy shadow or bezel. */
+.lp-glass {
+  border: 1px solid rgba(158, 192, 255, 0.35);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
 /* ── How it works ────────────────────────────────────────────────── */
 .lp-how {
-  display: flex;
-  align-items: center;
-  min-height: 100vh;
-  padding: 72px clamp(16px, 4vw, 48px);
+  padding: 96px clamp(16px, 4vw, 48px) 88px;
   background:
     linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
     linear-gradient(90deg, var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
@@ -457,205 +475,270 @@
 }
 
 .lp-how__inner {
-  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.lp-how__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 40px;
-}
-
-/* Win98 segmented progress, fills as you scroll */
-.lp-how__bar {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--white);
-  box-shadow:
-    inset 1px 1px var(--win-dark),
-    inset -1px -1px var(--white),
-    inset 2px 2px var(--win-shadow),
-    inset -2px -2px var(--win-light);
-}
-
-.lp-how__seg {
-  display: block;
-  width: 72px;
-  height: 18px;
-  background: var(--title-gradient);
-  transform-origin: left center;
 }
 
 .lp-how__steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px;
+  gap: 48px;
   list-style: none;
 }
 
-.lp-step__win {
-  rotate: var(--tilt, 0deg);
-  box-shadow:
-    inset -1px -1px var(--win-dark),
-    inset 1px 1px var(--win-light),
-    inset -2px -2px var(--win-shadow),
-    inset 2px 2px var(--white),
-    var(--shadow-hard-lg);
-}
-
-.lp-step__body {
+.lp-step {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 10px;
+  padding: 12px 12px 18px;
 }
 
-.lp-step__screen {
-  display: grid;
-  place-items: center;
-  height: 150px;
-  padding: 12px;
-  background: var(--bg-radial);
-  box-shadow:
-    inset 1px 1px var(--win-shadow),
-    inset -1px -1px var(--white),
-    inset 2px 2px var(--win-dark),
-    inset -2px -2px var(--win-light);
+/* Thin glowing connector with an arrow head between steps */
+.lp-step:not(:last-child)::after {
+  position: absolute;
+  top: 34%;
+  left: calc(100% + 6px);
+  width: 36px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(158, 192, 255, 0), var(--white));
+  box-shadow: 0 0 8px rgba(158, 192, 255, 0.9);
+  content: "";
 }
 
-.lp-step__art {
-  width: 80%;
-  max-height: 120px;
+.lp-step:not(:last-child)::before {
+  position: absolute;
+  top: calc(34% - 4px);
+  left: calc(100% + 36px);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid var(--white);
+  filter: drop-shadow(0 0 4px rgba(158, 192, 255, 0.9));
+  content: "";
 }
 
-.lp-step__orbs {
-  display: flex;
-  gap: 6px;
+/* Opaque dark well: the screen blend needs a solid backdrop inside the
+   glass panel (backdrop-filter makes the panel a stacking context). */
+.lp-step__well {
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--abyss);
+  aspect-ratio: 900 / 678;
 }
 
-.lp-step__orb {
-  width: 64px;
+.lp-step__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: screen;
 }
 
-.lp-step__title {
-  font-size: 28px;
+.lp-step__label {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .lp-step__num {
-  color: #0A1CA8;
+  margin-right: 6px;
+  color: var(--ice);
 }
 
 .lp-step__text {
+  color: var(--ice);
   font-size: 22px;
+  line-height: 1.15;
 }
 
-/* ── Filters playground ──────────────────────────────────────────── */
+/* ── Filters carousel ────────────────────────────────────────────── */
 .lp-filters {
-  padding: 88px clamp(16px, 4vw, 48px) 72px;
+  padding: 88px clamp(16px, 4vw, 48px) 80px;
   background:
     linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
     linear-gradient(90deg, var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
-    var(--cobalt);
+    var(--cobalt-mid);
 }
 
-.lp-filters__head {
-  max-width: 1100px;
-  margin: 0 auto 24px;
-}
-
-.lp-filters__sub {
-  margin-top: 10px;
-  font-size: 26px;
-}
-
-.lp-playground {
-  position: relative;
-  max-width: 1100px;
-  height: 560px;
+.lp-carousel {
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.lp-win {
-  position: absolute;
-  width: min(320px, 86vw);
-  touch-action: none;
-}
-
-.lp-win--1 { top: 4%;  left: 1%;  --tilt: -4deg; }
-.lp-win--2 { top: 0;   left: 52%; --tilt: 3deg; }
-.lp-win--3 { top: 52%; left: 14%; --tilt: 2deg; }
-.lp-win--4 { top: 46%; left: 63%; --tilt: -3deg; }
-
-.lp-win__inner {
-  rotate: var(--tilt);
-}
-
-.lp-win__inner .w98-window {
-  box-shadow:
-    inset -1px -1px var(--win-dark),
-    inset 1px 1px var(--win-light),
-    inset -2px -2px var(--win-shadow),
-    inset 2px 2px var(--white),
-    var(--shadow-hard-lg);
-}
-
-.lp-win__body {
+.lp-carousel__track {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 20px;
+  margin: 0 -8px;
+  padding: 14px 8px 22px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 8px;
+  scrollbar-width: none;
+  cursor: grab;
 }
 
-.lp-win__orb {
-  position: relative;
+.lp-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.lp-carousel__track.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+
+.lp-carousel__track:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 4px;
+}
+
+.lp-card {
+  flex: 0 0 clamp(240px, 24vw, 300px);
+  overflow: hidden;
+  scroll-snap-align: start;
+  transition:
+    transform var(--dur-med) var(--ease-snap),
+    box-shadow var(--dur-med) var(--ease-snap);
+}
+
+.lp-card:hover,
+.lp-card.is-active {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 2px var(--white),
+    0 0 0 5px rgba(158, 192, 255, 0.45),
+    0 0 26px rgba(158, 192, 255, 0.55);
+}
+
+.lp-card__media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(158, 192, 255, 0.3);
+}
+
+.lp-card__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+
+/* Placeholder until public/assets/filters/<id>.png exists */
+.lp-card__placeholder {
   display: grid;
-  flex: 0 0 auto;
   place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: var(--abyss);
-  box-shadow: inset 0 0 0 2px var(--win-shadow);
-}
-
-.lp-win__orb .ch-gel {
-  position: absolute;
-  inset: -6px;
-  width: calc(100% + 12px);
-}
-
-.lp-win__icon {
-  position: relative;
-  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(rgba(158, 192, 255, 0.12) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(158, 192, 255, 0.12) 1px, transparent 1px) 0 0 / 24px 24px,
+    radial-gradient(circle at 50% 40%, #4F6DFF 0%, #1A2BA8 55%, var(--abyss) 100%);
   color: var(--white);
 }
 
-.lp-win__name {
-  font-size: 28px;
+.lp-card__placeholder svg {
+  filter: drop-shadow(0 0 10px rgba(158, 192, 255, 0.9));
 }
 
-.lp-win__desc {
+.lp-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 16px;
+}
+
+.lp-card__name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.lp-card__desc {
+  color: var(--ice);
   font-size: 21px;
+  line-height: 1.1;
 }
 
-.lp-win__key {
-  margin-top: 4px;
-  color: #303030;
+.lp-card__key {
+  color: rgba(158, 192, 255, 0.75);
   font-size: 19px;
 }
 
-.lp-playground__spark {
-  position: absolute;
+.lp-carousel__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 8px;
 }
 
-.lp-playground__spark--a { top: 40%; left: 46%; }
-.lp-playground__spark--b { top: 88%; left: 4%; }
+.lp-carousel__arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(158, 192, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lp-carousel__arrow:hover:not(:disabled) {
+  border-color: var(--white);
+  box-shadow: 0 0 14px rgba(158, 192, 255, 0.6);
+}
+
+.lp-carousel__arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.lp-carousel__arrow:focus-visible,
+.lp-carousel__dot:focus-visible {
+  outline: 3px dashed var(--white);
+  outline-offset: 3px;
+}
+
+.lp-carousel__dots {
+  display: flex;
+  gap: 4px;
+}
+
+/* 24px hit area around a 10px dot */
+.lp-carousel__dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lp-carousel__dot::before {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--ice);
+  border-radius: 50%;
+  content: "";
+  transition: background var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.lp-carousel__dot.is-active::before {
+  background: var(--white);
+  box-shadow: 0 0 8px rgba(158, 192, 255, 0.9);
+}
 
 /* ── Final CTA ───────────────────────────────────────────────────── */
 .lp-final {
@@ -665,19 +748,16 @@
   align-items: center;
   gap: 16px;
   overflow: hidden;
-  padding: 110px 16px 96px;
+  padding: 120px 16px 104px;
   text-align: center;
   background: var(--bg-radial);
 }
 
-.lp-final__globe {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 560px;
-  opacity: 0.35;
-  translate: -50% -50%;
-  pointer-events: none;
+/* Small ring centred on the heading (same split ring as the hero) */
+.lp-final__stage {
+  --ring: min(820px, 118vw);
+  position: relative;
+  padding: 40px 0;
 }
 
 .lp-final__title {
@@ -694,9 +774,11 @@
   max-width: 34ch;
   color: var(--ice);
   font-size: 26px;
+  text-shadow: 0 0 6px var(--abyss), 2px 2px 0 var(--abyss);
 }
 
 .lp-final .lp-launch {
+  position: relative;
   margin-top: 12px;
 }
 
@@ -712,22 +794,37 @@
   font-size: 22px;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────── */
+/* ── Responsive (lower sections) ────────────────────────────────── */
 @media (max-width: 899px) {
   .lp-how__steps {
     grid-template-columns: minmax(0, 1fr);
     max-width: 520px;
     margin: 0 auto;
+    gap: 44px;
+  }
+
+  /* Connectors run downwards between stacked steps */
+  .lp-step:not(:last-child)::after {
+    top: calc(100% + 6px);
+    left: 50%;
+    width: 2px;
+    height: 26px;
+    background: linear-gradient(180deg, rgba(158, 192, 255, 0), var(--white));
+  }
+
+  .lp-step:not(:last-child)::before {
+    top: calc(100% + 32px);
+    left: calc(50% - 4px);
+    border-top: 7px solid var(--white);
+    border-right: 5px solid transparent;
+    border-bottom: 0;
+    border-left: 5px solid transparent;
   }
 }
 
-@media (max-width: 699px) {
-  .lp-playground {
-    height: 1040px;
+@media (prefers-reduced-motion: reduce) {
+  .lp-card,
+  .lp-carousel__dot::before {
+    transition: none;
   }
-
-  .lp-win--1 { top: 0;   left: 2%; }
-  .lp-win--2 { top: 25%; left: 8%; }
-  .lp-win--3 { top: 50%; left: 2%; }
-  .lp-win--4 { top: 75%; left: 8%; }
 }
