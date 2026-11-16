@@ -11,6 +11,14 @@
 .ch-screen {
   mix-blend-mode: screen;
   user-select: none;
+}
+
+/* The decorative images never take pointer events (the gel orb overhangs
+   its button). Interactive elements that carry .ch-screen, like the orb
+   buttons, stay clickable: the blend class must not disable them. */
+.ch-logo,
+.ch-orbit-star,
+.ch-gel {
   pointer-events: none;
 }
 

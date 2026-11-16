@@ -846,7 +846,10 @@
   width: var(--orb);
   height: var(--orb);
   border-radius: 50%;
-  transition: scale var(--dur-fast) var(--ease-snap), box-shadow var(--dur-med) var(--ease-snap);
+  transition:
+    scale var(--dur-fast) var(--ease-snap),
+    translate var(--dur-fast) var(--ease-snap),
+    box-shadow var(--dur-fast) var(--ease-snap);
 }
 
 .lp-orb__img {
@@ -868,8 +871,15 @@
   line-height: 1;
 }
 
+/* Obviously interactive: lift + glow on hover */
 .lp-orb:hover .lp-orb__ball {
   scale: 1.08;
+  translate: 0 -4px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 22px 6px rgba(158, 192, 255, 0.6);
+}
+
+.lp-orb:hover {
+  color: var(--white);
 }
 
 .lp-orb.is-active {
@@ -886,6 +896,30 @@
 .lp-orb:focus-visible {
   outline: 3px dashed var(--white);
   outline-offset: 4px;
+}
+
+/* "click a filter" hint: fades out after the first click */
+.lp-fx__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -6px;
+  color: var(--ice);
+  font-size: 22px;
+  transition: opacity 0.4s ease;
+}
+
+.lp-fx__hint.is-gone {
+  opacity: 0;
+}
+
+.lp-fx__hint-arrow {
+  display: inline-block;
+  animation: lp-hint-bob 1.4s ease-in-out infinite;
+}
+
+@keyframes lp-hint-bob {
+  50% { transform: translateY(4px); }
 }
 
 /* Tour: a thin timer line and a pause / play control */
@@ -953,7 +987,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lp-fx__layer.is-active .lp-fx__word,
-  .lp-fx__timer-fill {
+  .lp-fx__timer-fill,
+  .lp-fx__hint-arrow {
     animation: none;
   }
 

@@ -51,6 +51,8 @@ export default function FilterShowcase() {
   const rootRef = useRef(null)
   const radiosRef = useRef([])
   const prevRef = useRef(0)
+  const fadeRef = useRef(null)
+  const [clicked, setClicked] = useState(false)
   const [active, setActive] = useState(0)
   const [auto, setAuto] = useState(true)
   const [onScreen, setOnScreen] = useState(false)
@@ -73,25 +75,24 @@ export default function FilterShowcase() {
 
   const stopAuto = useCallback(() => setAuto(false), [])
 
-  // Crossfade the stage on every change (layout effect, before paint)
+  // Switch the stage on every change. Runs in the layout effect right after
+  // the commit (first visible change on the next frame), crossfades in
+  // 300ms, and a new selection always wins: the running fade is killed and
+  // any layer it left half-visible snaps off.
   useGSAP(() => {
     const layers = gsap.utils.toArray('.lp-fx__layer')
     const from = prevRef.current
-    if (from === active) {
-      gsap.set(layers, { autoAlpha: (i) => (i === active ? 1 : 0) })
-      return
-    }
     prevRef.current = active
-    if (prefersReducedMotion()) {
-      gsap.set(layers, { autoAlpha: (i) => (i === active ? 1 : 0) })
+    fadeRef.current?.kill()
+    if (from === active || prefersReducedMotion()) {
+      gsap.set(layers, { autoAlpha: (i) => (i === active ? 1 : 0), scale: 1 })
       return
     }
-    gsap.timeline()
-      .to(layers[from], { autoAlpha: 0, scale: 0.98, duration: 0.45, ease: 'power2.in' }, 0)
-      .fromTo(layers[active],
-        { autoAlpha: 0, scale: 1.05, filter: 'brightness(1.6)' },
-        { autoAlpha: 1, scale: 1, filter: 'brightness(1)', duration: 0.6, ease: 'power2.out', clearProps: 'filter' }, 0.12)
-      .fromTo('.lp-fx__caption > *', { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.05 }, 0.15)
+    gsap.set(layers.filter((_, i) => i !== active && i !== from), { autoAlpha: 0, scale: 1 })
+    fadeRef.current = gsap.timeline()
+      .to(layers[from], { autoAlpha: 0, duration: 0.3, ease: 'power1.out' }, 0)
+      .fromTo(layers[active], { autoAlpha: 0, scale: 1.03 }, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'power2.out' }, 0)
+      .fromTo('.lp-fx__caption', { opacity: 0.35 }, { opacity: 1, duration: 0.2, ease: 'none' }, 0)
   }, { dependencies: [active], scope: rootRef })
 
   const select = (i, focus = false) => {
@@ -136,6 +137,9 @@ export default function FilterShowcase() {
         </div>
 
         <div className="lp-fx__side">
+          <p className={`lp-fx__hint${clicked ? ' is-gone' : ''}`} aria-hidden="true">
+            <span className="lp-fx__hint-arrow">↓</span> click a filter
+          </p>
           <div
             className="lp-fx__orbs"
             role="radiogroup"
@@ -156,7 +160,10 @@ export default function FilterShowcase() {
                   aria-label={f.label.toLowerCase().includes(f.short) ? f.label.toLowerCase() : `${f.short}, ${f.label.toLowerCase()}`}
                   tabIndex={checked ? 0 : -1}
                   className={`lp-orb ch-screen${checked ? ' is-active' : ''}`}
-                  onClick={() => select(i)}
+                  onClick={() => {
+                    setClicked(true)
+                    select(i)
+                  }}
                 >
                   <span className="lp-orb__ball" aria-hidden="true">
                     <GelOrb hue={orbHue(i)} className="lp-orb__img" />
