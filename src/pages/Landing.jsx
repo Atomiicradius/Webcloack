@@ -30,11 +30,17 @@ import {
   ChromeLogo, GelOrb, GridFloor, Sparkle, Ticker, WireGlobe,
 } from '../components/chrome/Decor.jsx'
 import { ART, floorY } from '../components/chrome/decorAssets.js'
+import LiquidBlob from './landing/LiquidBlob.jsx'
 import './landing.css'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, Draggable, SplitText)
 
 const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
+
+// Paper Shaders LiquidMetal for the bottom-left blob. Off: in testing the
+// rendered chrome-blob image looked richer than the procedural shader.
+// Set true to lazy-load it after first paint (WebGL2 + motion only).
+const LIQUID_SHADER = false
 
 const TICKER = [
   'tracks 4 hands',
@@ -338,7 +344,9 @@ export default function Landing() {
               <div className="lp-hero__globe"><WireGlobe ring /></div>
             </div>
             <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="1.3" />
-            <ArtLayer art={ART.chromeBlob} className="lp-art--blob" depth="1.6" />
+            <div className="lp-art ch-screen lp-art--blob" data-depth="1.6" aria-hidden="true">
+              <span className="lp-art__tilt"><LiquidBlob enableShader={LIQUID_SHADER} /></span>
+            </div>
             <ArtLayer art={ART.sticker} className="lp-art--sticker" depth="1.9" />
             <div className="lp-sparks" data-depth="1.6" aria-hidden="true">
               {SPARKLES.map(([x, y, size, color]) => (

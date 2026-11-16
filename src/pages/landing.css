@@ -175,6 +175,32 @@
   transform: rotate(9deg);
 }
 
+/* Blob: PNG poster, crossfades to the lazy LiquidMetal shader */
+.lp-blob {
+  position: relative;
+}
+
+.lp-blob__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: opacity 0.8s ease;
+}
+
+.lp-blob__layer {
+  position: absolute;
+  inset: 0;
+  animation: lp-fade-in 0.8s ease both;
+}
+
+.lp-blob--shader .lp-blob__img {
+  opacity: 0;
+}
+
+@keyframes lp-fade-in {
+  from { opacity: 0; }
+}
+
 .lp-sparks {
   position: absolute;
   inset: 0;
