@@ -388,7 +388,9 @@
     width: min(64svh, 44vw);
   }
 
+  .lp-chip--a { top: 48%; left: 4vw; }
   .lp-chip--b { right: 36vw; }
+  .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
 }
 
 /* Phones: the logo and launch button own the screen; art shrinks or hides */

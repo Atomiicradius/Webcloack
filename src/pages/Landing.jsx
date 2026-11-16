@@ -99,14 +99,23 @@ export default function Landing() {
         intro
           .from('.lp-hero__globe', { opacity: 0, scale: 0.55, duration: 1.3 })
           .from('.lp-floor', { opacity: 0, yPercent: 30, duration: 1.1 }, 0)
+          // Art floats in, deeper layers travelling further (staggered parallax)
           .from('.lp-art__img', {
-            opacity: 0, y: 60, scale: 0.9, duration: 1.1, stagger: 0.12, ease: 'power3.out',
+            opacity: 0,
+            y: (i, el) => 45 * Number(el.closest('[data-depth]')?.dataset.depth || 1),
+            scale: 0.9,
+            duration: 1.2,
+            stagger: 0.14,
+            ease: 'power3.out',
           }, 0.2)
           .from('.lp-hero__logo', { yPercent: -180, opacity: 0, duration: 0.9, ease: 'back.out(1.8)' }, 0.35)
           .fromTo('.lp-flash', { opacity: 0 }, { opacity: 0.7, duration: 0.05, ease: 'none', yoyo: true, repeat: 1 }, '-=0.28')
           .from('.lp-kicker', { opacity: 0, y: -12, duration: 0.4 }, '<')
-          .from('.lp-hero .lp-ring', { opacity: 0, scale: 0.75, duration: 1.1, ease: 'power2.out' }, '<')
-          .from('.lp-cta > *, .lp-note', { opacity: 0, y: 18, stagger: 0.08, duration: 0.45 }, '+=0.45')
+          // Ring: glow fades in while the thin line draws around (back arc, then front)
+          .from('.lp-hero .lp-ring', { opacity: 0, scale: 0.8, duration: 1.1, ease: 'power2.out' }, '<')
+          .fromTo('.lp-hero .lp-ring--back .lp-ring__line', { strokeDasharray: '0 1' }, { strokeDasharray: '1 0', duration: 0.7, ease: 'power2.in' }, '<')
+          .fromTo('.lp-hero .lp-ring--front .lp-ring__line', { strokeDasharray: '0 1' }, { strokeDasharray: '1 0', duration: 0.7, ease: 'power2.out' }, '>')
+          .from('.lp-cta > *, .lp-note', { opacity: 0, y: 18, stagger: 0.08, duration: 0.45 }, 1.5)
           .from('.lp-chip', { opacity: 0, scale: 0, stagger: 0.08, duration: 0.5, ease: 'back.out(2.2)' }, '<')
 
         // Tagline revealed line by line (re-splits after fonts / resize)
@@ -302,15 +311,16 @@ export default function Landing() {
             </div>
 
             <div className="lp-hero__copy">
-              {/* Paint order inside the stage: back ring, globe, logo, front ring */}
+              {/* Paint order inside the stage: back ring, globe, logo, front ring, kicker */}
               <div className="lp-logo-stage">
-                <p className="lp-kicker">introducing</p>
                 <GlowRingHalf side="back" />
                 <div className="lp-hero__globe-wrap" data-depth="0.4">
                   <div className="lp-hero__globe"><WireGlobe /></div>
                 </div>
                 <h1 id="lp-title" className="lp-hero__logo ch-screen"><ChromeLogo /></h1>
                 <GlowRingHalf side="front" />
+                {/* last, so the ring glow never dims it */}
+                <p className="lp-kicker">introducing</p>
               </div>
               <p className="lp-tagline">
                 your hands are<br />the invisibility cloak.

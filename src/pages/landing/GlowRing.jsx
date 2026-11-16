@@ -66,9 +66,9 @@ const edge = 0.38 // ends stay lit so the two halves read as one ring
             {/* medium ice */}
             <path d={d} stroke={`url(#${id}-core)`} strokeWidth="12" opacity="0.85" filter={`url(#${id}-mid)`} />
             {/* tight white */}
-            <path d={d} stroke={`url(#${id}-core)`} strokeWidth="5" opacity="1" filter={`url(#${id}-tight)`} />
+            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="5" opacity="1" filter={`url(#${id}-tight)`} />
             {/* core line */}
-            <path d={d} stroke={`url(#${id}-core)`} strokeWidth="3" />
+            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="3" />
           </g>
         </svg>
 
