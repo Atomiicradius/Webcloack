@@ -80,10 +80,16 @@
 /* GSAP owns transform (and resets the individual translate / rotate /
    scale properties) on animated elements, so static offsets here use
    margins and static tilts live on non-animated inner wrappers. */
+/* Composition: a protected centre column (kicker, logo, tagline, CTA,
+   microcopy) sized by width AND height, and two outer side zones (~22vw
+   each) that hold every decoration. Decorations may bleed off-screen but
+   never enter the centre column; on cramped viewports they drop out in
+   priority order (see the media queries below). */
 .lp-hero {
-  --globe: min(84svh, 62vw);
-  /* Never wider than the 1x logo (1120px); scales with width AND height */
-  --logo-w: min(56vw, 95svh, 1120px);
+  /* Never wider than the 1x logo (1120px) */
+  --logo-w: min(54vw, 95svh, 1120px);
+  --globe: min(calc(var(--logo-w) * 0.92), 96svh);
+  --gap: clamp(24px, 3.4svh, 44px);
   position: relative;
   height: 100svh;
   min-height: 640px;
@@ -140,16 +146,14 @@
   height: auto;
 }
 
-/* Bust: right edge, cropped by the viewport */
-/* Marble bust: ~40vw, lower right, bleeding off the right edge. The logo
-   and globe stay dead centre; the bubble sits just under the wordmark
-   (painted after it in screen blend, so neither hides the other). The
-   chest fades into the grid floor. No colour grading: the art is already
-   in the palette and the pink bubble is the one warm accent. */
+/* Marble bust: right side zone, bottom-anchored, bleeding off the right
+   edge. Width keeps the bubble (8-34% of the image) right of ~78vw and the
+   headphones (to 87%) inside the viewport. Chest fades into the floor.
+   No colour grading: the pink bubble is the one warm accent. */
 .lp-art--bust {
-  top: 34svh;
-  right: -4vw;
-  width: 40vw;
+  right: -1vw;
+  bottom: -4svh;
+  width: min(22vw, 44svh, 520px);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
   mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
 }
@@ -182,30 +186,29 @@
   opacity: 0.16;
 }
 
-/* cloak.exe window: upper left, tilted */
+/* cloak.exe window: left side zone, under the nav */
 .lp-art--window {
-  top: 13%;
+  top: clamp(70px, 11svh, 120px);
   left: 1.5vw;
-  width: min(25vw, 400px);
+  width: min(18vw, 28svh, 360px);
 }
 
 .lp-art--window .lp-art__tilt {
   transform: rotate(-7deg);
 }
 
-/* Liquid chrome blob: bottom left */
+/* Liquid chrome blob: left side zone, bottom */
 .lp-art--blob {
   bottom: 2svh;
   left: -4vw;
-  width: min(33vw, 560px);
+  width: min(24vw, 40svh, 460px);
 }
 
-/* Barcode sticker: bottom right, over the bust's shoulder */
-/* Barcode sticker: small, on the grid, bottom centre-right */
+/* Barcode sticker: right side zone, under the "7 filters" tag */
 .lp-art--sticker {
-  right: 37vw;
-  bottom: 4svh;
-  width: min(11vw, 170px);
+  top: calc(clamp(70px, 11svh, 120px) + 9svh);
+  right: 4vw;
+  width: min(8vw, 13svh, 150px);
 }
 
 .lp-art--sticker .lp-art__tilt {
@@ -297,13 +300,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 72px 16px 40px;
+  padding: clamp(64px, 9svh, 96px) 16px clamp(20px, 4svh, 48px);
   text-align: center;
 }
 
 .lp-kicker {
   color: var(--ice);
-  font-size: 26px;
+  font-size: clamp(18px, 2.7svh, 26px);
   letter-spacing: 6px;
 }
 
@@ -315,7 +318,7 @@
   --ring: calc(var(--logo-w) * 1.2);
   position: relative;
   width: var(--logo-w);
-  margin-top: 40px;
+  margin-top: clamp(30px, 4.5svh, 48px);
 }
 
 .lp-logo-stage > .lp-kicker {
@@ -359,11 +362,25 @@
   position: relative;
 }
 
+/* Clear of the ring: its lowest point (front arc, at full precession
+   stretch) sits ~0.07 logo-widths below the wordmark band. */
 .lp-tagline {
-  margin-top: calc(var(--logo-w) * 0.05);
-  font-size: clamp(30px, 3.2vw, 44px);
+  margin-top: max(var(--gap), calc(var(--logo-w) * 0.085));
+  font-size: clamp(24px, min(3vw, 4.6svh), 46px);
   line-height: 1.05;
   text-shadow: 2px 2px 0 var(--abyss);
+  isolation: isolate; /* keeps the backdrop below the text, above the hero */
+}
+
+/* Soft dark backdrop so the tagline stays legible over the globe and ring */
+.lp-tagline::before {
+  position: absolute;
+  inset: -40% -14%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(6, 12, 60, 0.7), rgba(6, 12, 60, 0));
+  content: "";
+  pointer-events: none;
 }
 
 .lp-cta {
@@ -372,24 +389,24 @@
   align-items: center;
   justify-content: center;
   gap: 16px 28px;
-  margin-top: 26px;
+  margin-top: var(--gap);
 }
 
 .lp-launch {
-  min-height: 64px;
-  padding: 0 34px;
-  font-size: 19px;
+  min-height: clamp(50px, 7svh, 66px);
+  padding: 0 clamp(24px, 3svh, 36px);
+  font-size: clamp(15px, 2.1svh, 19px);
 }
 
 .lp-link {
-  font-size: 26px;
+  font-size: clamp(20px, 2.8svh, 26px);
   text-shadow: 2px 2px 0 var(--abyss);
 }
 
 .lp-note {
-  margin-top: 16px;
+  margin-top: var(--gap);
   color: var(--ice);
-  font-size: 22px;
+  font-size: clamp(18px, 2.4svh, 22px);
   text-shadow: 2px 2px 0 var(--abyss);
 }
 
@@ -407,42 +424,38 @@
   border-radius: var(--radius-pill);
   background: rgba(6, 12, 60, 0.75);
   box-shadow: var(--shadow-hard);
-  font-size: 24px;
+  font-size: clamp(18px, 2.6svh, 24px);
   white-space: nowrap;
 }
 
-.lp-chip--a { top: 58%; left: 6vw; }
-.lp-chip--b { top: 13%; right: 31vw; background: var(--white); color: #0A1CA8; border-color: var(--white); }
-.lp-chip--c { bottom: 11%; left: 27vw; }
+.lp-chip--a { top: 52svh; left: 3vw; }
+.lp-chip--b { top: clamp(70px, 11svh, 120px); right: 5vw; background: var(--white); color: #0A1CA8; border-color: var(--white); }
+.lp-chip--c { top: 62svh; left: 5vw; }
 
-@media (max-width: 1100px) {
-  .lp-art--window {
-    top: 11%;
-    width: 26vw;
-  }
-
-
-  .lp-chip--a { top: 48%; left: 4vw; }
-  .lp-chip--b { right: 36vw; }
-  .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
+/* ── Priority-based simplification (desktop / laptop) ──────────────
+   As the viewport gets cramped (narrower OR shorter), remove in order:
+   1 sticker, 2 "0 uploads", 3 "4 hands", 4 shrink window + blob,
+   5 reduce the bust. The centre column never changes. Phones (<=760px)
+   have their own layout below. */
+@media (max-width: 1380px), (max-height: 800px) {
+  .lp-art--sticker { display: none; }
 }
 
-/* Shorter screens (e.g. 1280x720): a little smaller so the bubble clears
-   the "how it works" link */
-@media (max-height: 800px) and (min-width: 761px) {
-  .lp-art--bust {
-    right: -4vw;
-    width: 36vw;
-  }
+@media (max-width: 1300px), (max-height: 760px) {
+  .lp-chip--c { display: none; }
+}
 
-  /* keep the sticker and the lower tags off the note line */
-  .lp-art--sticker {
-    bottom: 1svh;
-    width: min(8vw, 130px);
-  }
+@media (max-width: 1200px), (max-height: 700px) {
+  .lp-chip--a { display: none; }
+}
 
-  .lp-chip--a { top: 48%; left: 4vw; }
-  .lp-chip--c { top: 63%; bottom: auto; left: 4vw; }
+@media (max-width: 1100px), (max-height: 650px) {
+  .lp-art--window { width: min(16vw, 24svh); }
+  .lp-art--blob { width: min(19vw, 32svh); }
+}
+
+@media (max-width: 960px), (max-height: 580px) {
+  .lp-art--bust { width: min(19vw, 38svh); }
 }
 
 /* Phones: the logo and launch button own the screen; art shrinks or hides */
@@ -458,10 +471,17 @@
     position: absolute;
   }
 
+  /* the centre column spans the phone width: no room for side decor */
   .lp-art--window,
   .lp-art--sticker,
-  .lp-chips {
+  .lp-chips,
+  .lp-sparks {
     display: none;
+  }
+
+  .lp-cta {
+    flex-direction: column;
+    gap: 18px;
   }
 
   .lp-art--bust {

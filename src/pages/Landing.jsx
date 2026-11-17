@@ -56,15 +56,15 @@ const TICKER = [
   'no upload',
 ]
 
-// Hand-placed sparkles: [left %, top %, size px, colour]
+// Hand-placed sparkles, side zones only (outer ~20% each side), so none
+// lands on the centre column: [left %, top %, size px, colour]
 const SPARKLES = [
-  [24, 16, 30, 'var(--white)'],
-  [71, 10, 20, 'var(--ice)'],
-  [62, 78, 36, 'var(--white)'],
-  [33, 70, 18, 'var(--ice)'],
-  [50, 6, 14, 'var(--white)'],
-  [8, 62, 20, 'var(--white)'],
-  [88, 52, 24, 'var(--white)'],
+  [9, 40, 24, 'var(--white)'],
+  [16, 46, 18, 'var(--ice)'],
+  [4, 70, 20, 'var(--white)'],
+  [83, 8, 16, 'var(--white)'],
+  [96, 30, 22, 'var(--ice)'],
+  [86, 44, 28, 'var(--white)'],
 ]
 
 /** One screen-blended art layer. The wrapper is the outermost animated
@@ -399,7 +399,7 @@ export default function Landing() {
                   <div className="lp-hero__globe"><WireGlobe /></div>
                 </div>
                 <h1 id="lp-title" className="lp-hero__logo ch-screen">
-                  <ChromeLogo sizes="(max-width: 760px) 94vw, min(56vw, 95vh, 1120px)" />
+                  <ChromeLogo sizes="(max-width: 760px) 94vw, min(54vw, 95vh, 1120px)" />
                 </h1>
                 <GlowRingHalf side="front" />
                 {/* last, so the ring glow never dims it */}
