@@ -133,15 +133,18 @@ export function Ticker({ items, css = false, className }) {
   )
 }
 
-/** The chrome WEBCLOAK wordmark (real image asset, screen-blended). */
-export function ChromeLogo({ className, decorative = false, ...rest }) {
+/** The chrome WEBCLOAK wordmark (real image, screen-blended). 1x is 1120px
+ *  wide, 2x 2240px; `sizes` must match the CSS width where it is used. */
+export function ChromeLogo({ className, decorative = false, sizes = '250px', ...rest }) {
   return (
     <img
       {...rest}
       className={cx('ch-screen ch-logo', className)}
       src={ASSETS.logo}
-      width="200"
-      height="100"
+      srcSet={`${ASSETS.logo} 1120w, ${ASSETS.logo2x} 2240w`}
+      sizes={sizes}
+      width="1120"
+      height="560"
       alt={decorative ? '' : 'Webcloak'}
       draggable="false"
     />

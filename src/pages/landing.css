@@ -82,7 +82,8 @@
    margins and static tilts live on non-animated inner wrappers. */
 .lp-hero {
   --globe: min(84svh, 62vw);
-  --logo-w: clamp(300px, 60vw, 1120px);
+  /* Never wider than the 1x logo (1120px); scales with width AND height */
+  --logo-w: min(56vw, 95svh, 1120px);
   position: relative;
   height: 100svh;
   min-height: 640px;
@@ -343,12 +344,12 @@
   pointer-events: none;
 }
 
-/* The 2:1 logo image has empty bands above and below the wordmark;
-   negative margins pull the kicker and tagline in. */
+/* The 2:1 logo image has empty bands above (~28% of its height) and below
+   (~32%) the wordmark; negative margins pull the kicker and tagline in. */
 .lp-hero__logo {
   position: relative;
   width: var(--logo-w);
-  margin: calc(var(--logo-w) * -0.1) 0 calc(var(--logo-w) * -0.11);
+  margin: calc(var(--logo-w) * -0.13) 0 calc(var(--logo-w) * -0.15);
 }
 
 .lp-kicker,

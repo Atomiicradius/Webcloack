@@ -398,7 +398,9 @@ export default function Landing() {
                 <div className="lp-hero__globe-wrap" data-depth="0.4">
                   <div className="lp-hero__globe"><WireGlobe /></div>
                 </div>
-                <h1 id="lp-title" className="lp-hero__logo ch-screen"><ChromeLogo /></h1>
+                <h1 id="lp-title" className="lp-hero__logo ch-screen">
+                  <ChromeLogo sizes="(max-width: 760px) 94vw, min(56vw, 95vh, 1120px)" />
+                </h1>
                 <GlowRingHalf side="front" />
                 {/* last, so the ring glow never dims it */}
                 <p className="lp-kicker">introducing</p>

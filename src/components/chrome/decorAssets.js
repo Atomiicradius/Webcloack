@@ -3,7 +3,10 @@
  */
 
 export const ASSETS = {
-  logo: '/assets/logo-chrome.png',
+  // Full-res source is public/assets/logo-chrome.png (2880x1440); the site
+  // serves 1x / 2x web copies through srcset.
+  logo: '/assets/web/logo-chrome-1120.jpg',
+  logo2x: '/assets/web/logo-chrome-2240.jpg',
   orbitStar: '/assets/orbit-star.png',
   gelOrb: '/assets/gel-orb.png',
 }
