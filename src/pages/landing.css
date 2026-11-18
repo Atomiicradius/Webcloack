@@ -93,7 +93,8 @@
 .lp-hero {
   --D: min(88svh, 62vw);                    /* visible globe diameter */
   --Dbox: calc(var(--D) / 0.9);             /* the SVG has a 5% margin around the rim */
-  --logo-w: min(46vw, 88svh, 1120px);       /* never wider than the 1x logo */
+  --logo-w: min(44vw, 88svh, 1120px);       /* <= min(46vw, 88svh, 1120px) */
+  --bust-w: min(35vw, 61svh);               /* 35vw, and <= 82svh tall (x1.327) */
   --cx: 50%;
   --cy: calc(50% - 1.5svh);
   --ring: calc(var(--logo-w) * 1.2);
@@ -156,16 +157,20 @@
   height: auto;
 }
 
-/* Marble bust: right side zone, bottom-anchored, bleeding off the right
-   edge. Width keeps the bubble (8-34% of the image) right of ~78vw and the
-   headphones (to 87%) inside the viewport. Chest fades into the floor.
-   No colour grading: the pink bubble is the one warm accent. */
+/* Marble bust: the major side highlight, ~35vw wide (at most ~82svh tall),
+   anchored bottom-right and bleeding ~12% off the right edge so the head
+   and headphones stay in view. It is placed by its BUBBLE: the top edge is
+   chosen so the bubble (21% down the image) clears the wordmark's bottom
+   by the bubble gap, which tucks the chest below the viewport edge, where
+   it fades into the grid. Behind the logo and the ring's front arc in the
+   DOM; never covers the letters, the button or the nav. No flip, no
+   colour grading: the pink bubble is the one warm accent. */
 .lp-art--bust {
-  right: -1vw;
-  bottom: -4svh;
-  width: min(22vw, 44svh, 520px);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 92%);
+  top: calc(var(--cy) + var(--logo-w) * 0.09 + clamp(44px, 5svh, 60px) - var(--bust-w) * 0.277);
+  right: calc(var(--bust-w) * -0.12);
+  width: var(--bust-w);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 98%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 98%);
 }
 
 .lp-bust {
@@ -200,7 +205,7 @@
 .lp-art--window {
   top: clamp(70px, 11svh, 120px);
   left: 1.5vw;
-  width: min(18vw, 28svh, 360px);
+  width: min(20.7vw, 32svh, 414px);
 }
 
 .lp-art--window .lp-art__tilt {
@@ -211,11 +216,12 @@
 .lp-art--blob {
   bottom: 2svh;
   left: -4vw;
-  width: min(24vw, 40svh, 460px);
+  width: min(28.8vw, 48svh, 552px);
 }
 
 /* Barcode sticker: right side zone, under the "7 filters" tag */
 .lp-art--sticker {
+  display: none;
   top: calc(clamp(70px, 11svh, 120px) + 9svh);
   right: 4vw;
   width: min(8vw, 13svh, 150px);
@@ -381,20 +387,25 @@
 }
 
 /* ── Priority-based simplification (desktop / laptop) ──────────────
-   As the viewport gets cramped (narrower OR shorter), remove in order:
-   1 sticker, 2 shrink window + blob, 3 reduce the bust. The centre column never changes. Phones (<=760px)
-   have their own layout below. */
-@media (max-width: 1380px), (max-height: 800px) {
-  .lp-art--sticker { display: none; }
+   The sticker only exists on wide + tall screens. As the viewport gets
+   cramped (narrower OR shorter) things go in this order: 1 the sticker,
+   2 the cloak.exe window, 3 the blob shrinks, 4 the bust shrinks (last).
+   The logo, globe and button never change. Phones (<=760px) have their
+   own layout below. */
+@media (min-width: 1500px) and (min-height: 860px) {
+  .lp-art--sticker { display: block; }
 }
 
-@media (max-width: 1100px), (max-height: 650px) {
-  .lp-art--window { width: min(16vw, 24svh); }
+@media (max-width: 1100px), (max-height: 690px) {
+  .lp-art--window { display: none; }
+}
+
+@media (max-width: 1000px), (max-height: 640px) {
   .lp-art--blob { width: min(19vw, 32svh); }
 }
 
-@media (max-width: 960px), (max-height: 580px) {
-  .lp-art--bust { width: min(19vw, 38svh); }
+@media (max-width: 900px), (max-height: 600px) {
+  .lp-hero { --bust-w: min(28vw, 50svh); }
 }
 
 /* Phones: the logo and launch button own the screen; art shrinks or hides */
@@ -404,8 +415,10 @@
     --logo-w: 94vw;
   }
 
-  /* the centre column spans the phone width: no room for side decor */
+  /* the globe, logo and button own the phone width: no side decor, just a
+     smaller bust cropped at the bottom-right as an accent */
   .lp-art--window,
+  .lp-art--blob,
   .lp-art--sticker,
   .lp-sparks {
     display: none;
@@ -417,17 +430,10 @@
 
   .lp-art--bust {
     top: auto;
-    right: 0;
-    bottom: -6svh;
-    width: 46vw;
+    right: -4vw;
+    bottom: -5svh;
+    width: 44vw;
   }
-
-  .lp-art--blob {
-    bottom: 1svh;
-    left: -16vw;
-    width: 62vw;
-  }
-
 }
 
 /* ── Section headings ────────────────────────────────────────────── */

@@ -400,7 +400,7 @@ export default function Landing() {
             </div>
 
             <h1 id="lp-title" className="lp-hero__logo ch-screen">
-              <ChromeLogo sizes="(max-width: 760px) 94vw, min(46vw, 88vh, 1120px)" />
+              <ChromeLogo sizes="(max-width: 760px) 94vw, min(44vw, 88vh, 1120px)" />
             </h1>
             <GlowRingHalf side="front" />
             {/* after the ring, so its glow never dims the text */}
