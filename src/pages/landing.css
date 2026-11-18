@@ -94,7 +94,14 @@
   --D: min(88svh, 62vw);                    /* visible globe diameter */
   --Dbox: calc(var(--D) / 0.9);             /* the SVG has a 5% margin around the rim */
   --logo-w: min(44vw, 88svh, 1120px);       /* <= min(46vw, 88svh, 1120px) */
-  --bust-w: min(35vw, 61svh);               /* 35vw, and <= 82svh tall (x1.327) */
+  /* Bust: base width (35vw, and <= 82svh tall at 1.327), a scale factor, and
+     the position of its bubble's top-left corner relative to the original
+     pin (bubble just under the wordmark). dx moves the pin LEFT, dy DOWN. */
+  --bust-w0: min(35vw, 61svh);
+  --bust-k: 1.2;                       /* the largest scale that passes every check */
+  --bust-dx: calc(var(--D) * 0.14);    /* pin moved left, into the corridor between the ring and the button */
+  --bust-dy: calc(var(--D) * 0.085);   /* ... and down, below the ring's front arc */
+  --bust-w: calc(var(--bust-w0) * var(--bust-k));
   --cx: 50%;
   --cy: calc(50% - 1.5svh);
   /* Ring: sized and placed from the globe, not the logo. Major axis 1.36x the
@@ -164,17 +171,17 @@
   height: auto;
 }
 
-/* Marble bust: the major side highlight, ~35vw wide (at most ~82svh tall),
-   anchored bottom-right and bleeding ~12% off the right edge so the head
-   and headphones stay in view. It is placed by its BUBBLE: the top edge is
-   chosen so the bubble (21% down the image) clears the wordmark's bottom
-   by the bubble gap, which tucks the chest below the viewport edge, where
-   it fades into the grid. Behind the logo and the ring's front arc in the
+/* Marble bust: the major side highlight, 1.2 x 35vw (42vw) wide, anchored
+   bottom-right. It is placed by its BUBBLE: the top-left corner of the
+   bubble (8% across, 21% down the image) is pinned below the wordmark and
+   to the right of the launch button, under the ring's front arc; the face
+   and the near headphone cup stay inside the viewport and the shoulder and
+   chest bleed off the right and bottom edges, fading into the grid. Behind the logo and the ring's front arc in the
    DOM; never covers the letters, the button or the nav. No flip, no
    colour grading: the pink bubble is the one warm accent. */
 .lp-art--bust {
-  top: calc(var(--cy) + var(--logo-w) * 0.09 + clamp(44px, 5svh, 60px) - var(--bust-w) * 0.277);
-  right: calc(var(--bust-w) * -0.12);
+  top: calc(var(--cy) + var(--logo-w) * 0.09 + clamp(44px, 5svh, 60px) + var(--bust-dy) - var(--bust-w) * 0.277);
+  right: calc(var(--bust-w0) * 0.798 - var(--bust-w) * 0.918 + var(--bust-dx));
   width: var(--bust-w);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 98%);
   mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 98%);
@@ -415,7 +422,7 @@
 }
 
 @media (max-width: 900px), (max-height: 600px) {
-  .lp-hero { --bust-w: min(28vw, 50svh); }
+  .lp-hero { --bust-w0: min(28vw, 50svh); }
 }
 
 /* Phones: the logo and launch button own the screen; art shrinks or hides */
@@ -440,7 +447,7 @@
 
   .lp-art--bust {
     top: auto;
-    right: -4vw;
+    right: -2.5vw;
     bottom: -5svh;
     width: 44vw;
   }

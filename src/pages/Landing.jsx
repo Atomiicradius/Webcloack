@@ -182,10 +182,13 @@ export default function Landing() {
         }
         animateRing('.lp-hero', 2)
         animateRing('.lp-final', 0.5)
-        // Art layers bob gently, out of phase
+        // Art layers bob gently, out of phase. The bust only ever bobs DOWN
+        // (data-bob), away from the logo and the ring, so the bubble can
+        // never drift into the clearance the layout gives it.
         gsap.utils.toArray('.lp-art__img').forEach((img, i) => {
+          const bob = Number(img.closest('[data-bob]')?.dataset.bob)
           gsap.to(img, {
-            y: i % 2 ? 10 : -12, duration: 3.4 + i * 0.5, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 1.6 + i * 0.2,
+            y: bob || (i % 2 ? 10 : -12), duration: 3.4 + i * 0.5, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 1.6 + i * 0.2,
           })
         })
         // Sparkles twinkle with staggered scale loops
@@ -392,7 +395,7 @@ export default function Landing() {
             {/* Marble bust (faces left, toward the logo). Screen blend lets
                 the logo and ring read through it; backlight and a faint
                 halftone live inside the blended stack. */}
-            <div className="lp-art ch-screen lp-art--bust" data-depth="0.7" aria-hidden="true">
+            <div className="lp-art ch-screen lp-art--bust" data-depth="0.3" data-bob="8" aria-hidden="true">
               <span className="lp-art__tilt lp-art__img lp-bust">
                 <img className="lp-bust__img" src={ART.bust.src} width={ART.bust.w} height={ART.bust.h} alt="" decoding="async" draggable="false" />
                 <span className="lp-bust__glow" />
