@@ -19,7 +19,7 @@ const PAGE = process.env.DEV_URL || 'http://localhost:5173/'
 const SIZES = (process.argv[3] || '1366x768,1536x864,1440x900,1280x720,1920x1080,2560x1440,390x844')
   .split(',').map((s) => s.split('x').map(Number))
 const PORT = 9333
-const profile = path.join(OUT, 'chrome-profile')
+const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'webcloak-hero-profile-')) // never inside the repo
 
 const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
@@ -61,14 +61,19 @@ for (const [w, h] of SIZES) {
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile })
   await send('Page.navigate', { url: PAGE + '?t=' + Date.now() })
   await sleep(5500) // load + hero intro timeline
+  // Self-test hook: HERO_INJECT_CSS='.lp-hero{--D:120svh}' should make the check fail
+  if (process.env.HERO_INJECT_CSS) {
+    await evaluate(`document.head.append(Object.assign(document.createElement('style'), { textContent: ${JSON.stringify(process.env.HERO_INJECT_CSS)} }))`)
+    await sleep(300)
+  }
   const res = await evaluate(`(${checker})()`)
   const shot = await send('Page.captureScreenshot', { format: 'png' })
   const file = path.join(OUT, `hero-${w}x${h}.png`)
   fs.writeFileSync(file, Buffer.from(shot.result.data, 'base64'))
   results.push({ ...res, file })
-  const status = res.ok ? 'OK  ' : 'FAIL'
-  const issues = res.problems.length ? '\n  ' + res.problems.join('\n  ') : ''
-  console.log(`${res.size} ${status} logo ${res.logoW}px  gaps ${JSON.stringify(res.gaps)}  bubble-ring ${res.bubbleRingGap}px${issues}`)
+  console.log(`${res.size.padEnd(10)} ${res.ok ? 'OK  ' : 'FAIL'}  globe ${res.metrics.globe}  logo ${res.metrics.logoW}px  button ${res.metrics.button}`)
+  console.log(`${' '.repeat(16)}${res.metrics.rhythm}  |  bubble ${res.metrics.bubble ?? 'n/a'}  |  bust ${res.metrics.bust ?? 'n/a'}`)
+  for (const p of res.problems) console.log(`${' '.repeat(16)}!! ${p}`)
 }
 console.log('screenshots + hero-results.json in', OUT)
 process.exitCode = results.every((r) => r.ok) ? 0 : 1
