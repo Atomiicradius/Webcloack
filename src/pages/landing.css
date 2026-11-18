@@ -215,11 +215,14 @@
   opacity: 0.16;
 }
 
-/* cloak.exe window: left side zone, under the nav */
+/* cloak.exe window: ~22% larger than before, a little further down and in
+   (>= 24px from the edge and the nav). The globe limits it: the width is also
+   capped by the room left of the globe, so on 16:10 screens (1440x900) where
+   the globe is relatively wide it only grows ~3%. */
 .lp-art--window {
-  top: clamp(70px, 11svh, 120px);
-  left: 1.5vw;
-  width: min(20.7vw, 32svh, 414px);
+  top: clamp(78px, 12svh, 130px);
+  left: 2.1vw;
+  width: min(calc(min(20.7vw, 32svh, 414px) * 1.22), calc((100vw - var(--D)) * 0.46));
 }
 
 .lp-art--window .lp-art__tilt {
@@ -227,10 +230,13 @@
 }
 
 /* Liquid chrome blob: left side zone, bottom */
+/* Chrome blob: 12% larger, tilted 20deg clockwise so its right lobe drops
+   away from the ring's lower-left arc (the ring clears it by >= 24px at
+   every pose) and its left side rises into the free corner. */
 .lp-art--blob {
-  bottom: -3svh;
-  left: -5vw;
-  width: min(28.8vw, 48svh, 552px);
+  bottom: -6svh;
+  left: -8vw;
+  width: calc(min(28.8vw, 48svh, 552px) * 1.12);
 }
 
 /* Barcode sticker: right side zone, under the "7 filters" tag */
@@ -243,6 +249,10 @@
 
 .lp-art--sticker .lp-art__tilt {
   transform: rotate(-8deg);
+}
+
+.lp-art--blob .lp-art__tilt {
+  transform: rotate(20deg);
 }
 
 /* Blob: PNG poster, crossfades to the lazy LiquidMetal shader */

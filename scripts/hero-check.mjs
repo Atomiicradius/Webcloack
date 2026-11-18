@@ -74,6 +74,7 @@ for (const [w, h] of SIZES) {
   console.log(`${res.size.padEnd(10)} ${res.ok ? 'OK  ' : 'FAIL'}  globe ${res.metrics.globe}  logo ${res.metrics.logoW}px  button ${res.metrics.button}`)
   console.log(`${' '.repeat(16)}${res.metrics.rhythm}  |  bubble ${res.metrics.bubble ?? 'n/a'}  |  bust ${res.metrics.bust ?? 'n/a'}`)
   console.log(`${' '.repeat(16)}ring ${res.metrics.ring}`)
+  if (res.metrics.leftSide) console.log(`${' '.repeat(16)}left ${res.metrics.leftSide}`)
   for (const p of res.problems) console.log(`${' '.repeat(16)}!! ${p}`)
 }
 console.log('screenshots + hero-results.json in', OUT)

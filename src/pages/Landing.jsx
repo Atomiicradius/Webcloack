@@ -65,9 +65,9 @@ const SPARKLES = [
 
 /** One screen-blended art layer. The wrapper is the outermost animated
  *  element (parallax), so it carries the blend; the img inside floats. */
-function ArtLayer({ art, className, depth }) {
+function ArtLayer({ art, className, depth, bob }) {
   return (
-    <div className={`lp-art ch-screen ${className}`} data-depth={depth} aria-hidden="true">
+    <div className={`lp-art ch-screen ${className}`} data-depth={depth} data-bob={bob} aria-hidden="true">
       <span className="lp-art__tilt">
         <img className="lp-art__img" src={art.src} width={art.w} height={art.h} alt="" decoding="async" draggable="false" />
       </span>
@@ -182,9 +182,10 @@ export default function Landing() {
         }
         animateRing('.lp-hero', 2)
         animateRing('.lp-final', 0.5)
-        // Art layers bob gently, out of phase. The bust only ever bobs DOWN
-        // (data-bob), away from the logo and the ring, so the bubble can
-        // never drift into the clearance the layout gives it.
+        // Art layers bob gently, out of phase. data-bob is a signed distance:
+        // the bust and blob only bob DOWN, the window and sticker UP, always
+        // away from the ring / logo, so no layer drifts into the clearance
+        // the layout gives it.
         gsap.utils.toArray('.lp-art__img').forEach((img, i) => {
           const bob = Number(img.closest('[data-bob]')?.dataset.bob)
           gsap.to(img, {
@@ -366,11 +367,11 @@ export default function Landing() {
           <div className="lp-floor"><GridFloor /></div>
 
           <div className="lp-hero__stage">
-            <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="1.3" />
-            <div className="lp-art ch-screen lp-art--blob" data-depth="1.6" aria-hidden="true">
+            <ArtLayer art={ART.cloakWindow} className="lp-art--window" depth="0.5" bob="-6" />
+            <div className="lp-art ch-screen lp-art--blob" data-depth="0.5" data-bob="8" aria-hidden="true">
               <span className="lp-art__tilt"><LiquidBlob enableShader={LIQUID_SHADER} /></span>
             </div>
-            <ArtLayer art={ART.sticker} className="lp-art--sticker" depth="1.9" />
+            <ArtLayer art={ART.sticker} className="lp-art--sticker" depth="0.5" bob="-6" />
             <div className="lp-sparks" data-depth="1.6" aria-hidden="true">
               {SPARKLES.map(([x, y, size, color]) => (
                 <span key={`${x}-${y}`} className="lp-spark-pos" style={{ left: `${x}%`, top: `${y}%` }}>

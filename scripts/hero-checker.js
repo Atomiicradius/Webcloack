@@ -72,6 +72,7 @@
   // bust. Everything is measured at REST (the pointer-parallax and bob
   // transforms are removed for the measurement) and then held to the
   // maximum motion the animation can add, so no pose can break a rule.
+  const bustCells = []
   const bustEl = q('.lp-bust'), wrap = bustEl.closest('.lp-art--bust')
   const savedT = [wrap.style.transform, bustEl.style.transform]
   wrap.style.transform = 'none'; bustEl.style.transform = 'none'
@@ -93,7 +94,7 @@
     cv.width = CW; cv.height = CH
     const cx2 = cv.getContext('2d', { willReadFrequently: true }); cx2.drawImage(img, 0, 0, CW, CH)
     const px2 = cx2.getImageData(0, 0, CW, CH).data
-    const cells = []
+    const cells = bustCells
     for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) {
       const o = (j * CW + i) * 4
       // the wrapper fades the bottom of the image (opaque to 52%, transparent at 98%)
@@ -192,7 +193,7 @@
     if (k.startsWith('spark')) continue
     const r = visibleBox(k, r0)
     near[k] = Math.round(minDist(ringAll, r))
-    if (k !== 'bust' && near[k] < 1) problems.push(`(ring) crosses the ${k}`)
+    // (window / blob / sticker clearances to the ring are asserted pixel-accurately below)
   }
   // how much of the wordmark the front arc covers (band ~12px wide)
   let inside = 0
@@ -204,6 +205,67 @@
   const covered = (inside * 12) / ((word.r - word.l) * (word.b - word.t))
   if (covered > 0.15) problems.push(`(ring) front arc covers ${Math.round(covered * 100)}% of the wordmark (> 15%)`)
   m.ring = `${Math.round(rw)}px = ${(rw / gd).toFixed(2)}x globe, centre ${Math.round(rcx - gx)},${Math.round(rcy - gy)}px off, front arc ${Math.round(dBtn)}px from the button, ${dBubble === null ? 'n/a' : Math.round(dBubble) + 'px'} from the bubble, covers ${Math.round(covered * 100)}% of the letters, near: ${JSON.stringify(near)}`
+
+  // left-side art and the sticker: pixel masks of the visible figure, measured
+  // at REST and held to the worst pose (pointer parallax + bob, see data-depth / data-bob)
+  const artFigure = (sel) => {
+    const wr = q(sel)
+    if (!vis(wr)) return null
+    const img = wr.querySelector('img'), tilt = wr.querySelector('.lp-art__tilt')
+    const movers = [wr, ...wr.querySelectorAll('.lp-art__img')]
+    const saved = movers.map((e) => e.style.transform), savedTilt = tilt.style.transform
+    const tm = getComputedStyle(tilt).transform
+    const [ta, tb] = tm && tm !== 'none' ? tm.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number) : [1, 0]
+    const ang = Math.atan2(tb, ta)
+    movers.forEach((e) => { e.style.transform = 'none' }); tilt.style.transform = 'none'
+    const rr = R(img)
+    movers.forEach((e, i) => { e.style.transform = saved[i] }); tilt.style.transform = savedTilt
+    const w2 = rr.r - rr.l, h2 = rr.b - rr.t, CW = 90, CH = Math.round((CW * h2) / w2)
+    const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH
+    const cc = cv.getContext('2d', { willReadFrequently: true }); cc.drawImage(img, 0, 0, CW, CH)
+    const d = cc.getImageData(0, 0, CW, CH).data, ox = (rr.l + rr.r) / 2, oy = (rr.t + rr.b) / 2, co = Math.cos(ang), si = Math.sin(ang)
+    const pts = []
+    for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) {
+      const o = (j * CW + i) * 4
+      if (0.3 * d[o] + 0.59 * d[o + 1] + 0.11 * d[o + 2] > 28) {
+        const x = rr.l + ((i + 0.5) / CW) * w2 - ox, y = rr.t + ((j + 0.5) / CH) * h2 - oy
+        pts.push([ox + x * co - y * si, oy + x * si + y * co])
+      }
+    }
+    const dep = Number(wr.dataset.depth || 0), bobA = Math.abs(Number(wr.dataset.bob || 0))
+    const bx = { l: Math.min(...pts.map((p) => p[0])), r: Math.max(...pts.map((p) => p[0])), t: Math.min(...pts.map((p) => p[1])), b: Math.max(...pts.map((p) => p[1])) }
+    return { pts, box: bx, allow: Math.hypot(18 * dep, 12 * dep) + bobA }
+  }
+  const pdist = (pts, samples) => { let best = Infinity; for (const [x, y] of pts) for (const [u, v] of samples) { const dd = Math.hypot(x - u, y - v); if (dd < best) best = dd } return best }
+  const rdist = (pts, r) => Math.min(...pts.map(([x, y]) => rect2f(x, y, r)))
+  const left = []
+  const win = artFigure('.lp-art--window'), blobF = artFigure('.lp-art--blob'), stk = artFigure('.lp-art--sticker')
+  if (win) {
+    const need = (v, min, what) => { if (v - win.allow < min) problems.push(`(window) ${Math.round(v)}px from ${what}, ${Math.round(v - win.allow)} at the worst pose (< ${min})`) }
+    const gDist = Math.min(...win.pts.map(([x, y]) => Math.hypot(x - gx, y - gy) - gd / 2))
+    const rDist = pdist(win.pts.filter((_, i) => i % 3 === 0), ringAll.filter((_, i) => i % 2 === 0))
+    const eDist = Math.min(win.box.l, win.box.t)
+    const nDist = Math.min(rdist(win.pts, nav), rdist(win.pts, brand))
+    need(eDist, 24, 'the viewport edge'); need(nDist, 24, 'the nav'); need(gDist, 20, 'the globe'); need(rDist, 20, 'the ring')
+    left.push(`window ${Math.round(win.box.r - win.box.l)}px: edge ${Math.round(eDist)}, nav ${Math.round(nDist)}, globe ${Math.round(gDist)}, ring ${Math.round(rDist)} (allow ${Math.round(win.allow)})`)
+  }
+  if (blobF) {
+    const rDist = pdist(blobF.pts.filter((_, i) => i % 3 === 0), ringAll.filter((_, i) => i % 2 === 0))
+    const bDist = rdist(blobF.pts, btn)
+    if (rDist - blobF.allow < 24) problems.push(`(blob) ${Math.round(rDist)}px from the ring, ${Math.round(rDist - blobF.allow)} at the worst pose (< 24)`)
+    if (bDist - blobF.allow < 24) problems.push(`(blob) ${Math.round(bDist)}px from the launch button, ${Math.round(bDist - blobF.allow)} at the worst pose (< 24)`)
+    left.push(`blob ${Math.round(blobF.box.r - blobF.box.l)}px: ring ${Math.round(rDist)}, button ${Math.round(bDist)} (allow ${Math.round(blobF.allow)})`)
+  }
+  if (stk) {
+    const rDist = pdist(stk.pts.filter((_, i) => i % 2 === 0), ringAll.filter((_, i) => i % 2 === 0))
+    const uDist = pdist(stk.pts.filter((_, i) => i % 2 === 0), bustCells.filter((_, i) => i % 4 === 0))
+    const nDist = Math.min(rdist(stk.pts, nav), rdist(stk.pts, brand))
+    if (rDist - stk.allow < 20) problems.push(`(sticker) ${Math.round(rDist)}px from the ring (< 20 at the worst pose)`)
+    if (uDist - stk.allow < 20) problems.push(`(sticker) ${Math.round(uDist)}px from the bust (< 20 at the worst pose)`)
+    if (nDist - stk.allow < 12) problems.push(`(sticker) ${Math.round(nDist)}px from the nav (< 12 at the worst pose)`)
+    left.push(`sticker: ring ${Math.round(rDist)}, bust ${Math.round(uDist)}, nav ${Math.round(nDist)}`)
+  }
+  m.leftSide = left.join(' | ')
 
   // removed things stay removed
   for (const sel of ['.lp-tagline', '.lp-link', '.lp-note', '.lp-chip']) if (q('.lp-hero ' + sel)) problems.push(`${sel} still in the hero`)
