@@ -54,15 +54,13 @@ const TICKER = [
   'no upload',
 ]
 
-// Hand-placed sparkles, side zones only (outer ~20% each side), so none
-// lands on the centre column: [left %, top %, size px, colour]
+// Hand-placed sparkles, outer side zones only (clear of the globe, bust and
+// button): [left %, top %, size px, colour]
 const SPARKLES = [
-  [9, 40, 24, 'var(--white)'],
-  [16, 46, 18, 'var(--ice)'],
-  [4, 70, 20, 'var(--white)'],
-  [83, 8, 16, 'var(--white)'],
-  [96, 30, 22, 'var(--ice)'],
-  [86, 44, 28, 'var(--white)'],
+  [27, 13, 22, 'var(--white)'],
+  [8, 50, 20, 'var(--ice)'],
+  [93, 24, 22, 'var(--white)'],
+  [79, 12, 16, 'var(--ice)'],
 ]
 
 /** One screen-blended art layer. The wrapper is the outermost animated
@@ -377,37 +375,22 @@ export default function Landing() {
               ))}
             </div>
 
-            <div className="lp-hero__copy">
-              {/* Paint order inside the stage: back ring, globe, logo, front ring, kicker */}
-              <div className="lp-logo-stage">
-                <GlowRingHalf side="back" />
-                <div className="lp-hero__globe-wrap" data-depth="0.4">
-                  <div className="lp-hero__globe"><WireGlobe /></div>
-                </div>
-                <h1 id="lp-title" className="lp-hero__logo ch-screen">
-                  <ChromeLogo sizes="(max-width: 760px) 94vw, min(54vw, 95vh, 1120px)" />
-                </h1>
-                <GlowRingHalf side="front" />
-                {/* last, so the ring glow never dims it */}
-                <p className="lp-kicker">introducing</p>
-              </div>
-              <div className="lp-cta">
-                <button
-                  type="button"
-                  className="ch-pill lp-launch"
-                  onClick={launch}
-                  onPointerEnter={prefetch}
-                  onFocus={prefetch}
-                >
-                  <span aria-hidden="true">▶</span> launch cloak.exe
-                </button>
-              </div>
+            {/* Composition, all positioned from one origin (--cx / --cy, the
+                viewport centre): back ring, globe, logo halo, bust, logo,
+                ring front half, kicker, launch button. DOM order is paint
+                order: the bust sits behind the logo and the ring's front
+                half, and above the globe so its fill never tints the pink
+                bubble. No element in this run may create a stacking context
+                (the logo, ring and bust blend through it). */}
+            <GlowRingHalf side="back" />
+            <div className="lp-hero__globe-wrap" data-depth="0.4">
+              <div className="lp-hero__globe"><WireGlobe /></div>
             </div>
+            <div className="lp-halo" aria-hidden="true" />
 
-            {/* Marble bust (faces left, toward the logo). Painted after the logo
-                stage so the globe's blue fill never tints the pink bubble;
-                screen blend lets the logo / ring still read through it.
-                Backlight and a faint halftone live inside the blended stack. */}
+            {/* Marble bust (faces left, toward the logo). Screen blend lets
+                the logo and ring read through it; backlight and a faint
+                halftone live inside the blended stack. */}
             <div className="lp-art ch-screen lp-art--bust" data-depth="0.7" aria-hidden="true">
               <span className="lp-art__tilt lp-art__img lp-bust">
                 <img className="lp-bust__img" src={ART.bust.src} width={ART.bust.w} height={ART.bust.h} alt="" decoding="async" draggable="false" />
@@ -416,6 +399,23 @@ export default function Landing() {
               </span>
             </div>
 
+            <h1 id="lp-title" className="lp-hero__logo ch-screen">
+              <ChromeLogo sizes="(max-width: 760px) 94vw, min(46vw, 88vh, 1120px)" />
+            </h1>
+            <GlowRingHalf side="front" />
+            {/* after the ring, so its glow never dims the text */}
+            <p className="lp-kicker">introducing</p>
+            <div className="lp-cta">
+              <button
+                type="button"
+                className="ch-pill lp-launch"
+                onClick={launch}
+                onPointerEnter={prefetch}
+                onFocus={prefetch}
+              >
+                <span aria-hidden="true">▶</span> launch cloak.exe
+              </button>
+            </div>
           </div>
         </section>
 

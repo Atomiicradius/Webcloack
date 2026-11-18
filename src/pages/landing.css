@@ -6,6 +6,9 @@
 
 .lp {
   --lp-grid: rgba(158, 192, 255, 0.12);
+  /* Launch button: height scales with the viewport (68px at 1440x900) */
+  --btn-h: clamp(56px, 7.6svh, 72px);
+  --btn-w: clamp(300px, 27vw, 480px);
   position: relative;
   min-height: 100vh;
   overflow-x: clip;
@@ -80,19 +83,26 @@
 /* GSAP owns transform (and resets the individual translate / rotate /
    scale properties) on animated elements, so static offsets here use
    margins and static tilts live on non-animated inner wrappers. */
-/* Composition: a protected centre column (kicker, logo, CTA)
-   sized by width AND height, and two outer side zones (~22vw
-   each) that hold every decoration. Decorations may bleed off-screen but
-   never enter the centre column; on cramped viewports they drop out in
-   priority order (see the media queries below). */
+/* Composition. One origin (--cx / --cy) = the viewport centre, nudged up by
+   1.5svh. The globe is centred there at min(88svh, 62vw) so it always fits;
+   the glowing ring, logo halo and logo share the origin (concentric), the
+   kicker sits a fixed gap above the wordmark and the launch button sits
+   low in the globe (73% of the hero height). Decorations live in the side
+   zones and drop out in priority order when the viewport is cramped (see
+   the media queries below). */
 .lp-hero {
-  /* Never wider than the 1x logo (1120px) */
-  --logo-w: min(54vw, 95svh, 1120px);
-  --globe: min(calc(var(--logo-w) * 0.92), 96svh);
-  --gap: clamp(24px, 3.4svh, 44px);
+  --D: min(88svh, 62vw);                    /* visible globe diameter */
+  --Dbox: calc(var(--D) / 0.9);             /* the SVG has a 5% margin around the rim */
+  --logo-w: min(46vw, 88svh, 1120px);       /* never wider than the 1x logo */
+  --cx: 50%;
+  --cy: calc(50% - 1.5svh);
+  --ring: calc(var(--logo-w) * 1.2);
+  --wm-half: calc(var(--logo-w) * 0.1);     /* half the wordmark's height */
+  --gap: clamp(28px, 4svh, 48px);           /* kicker -> wordmark */
+  --kh: clamp(22px, 3svh, 30px);            /* kicker line height */
   position: relative;
   height: 100svh;
-  min-height: 640px;
+  min-height: 560px;
   overflow: hidden;
   background:
     linear-gradient(var(--lp-grid) 1px, transparent 1px) 0 0 / 48px 48px,
@@ -117,11 +127,11 @@
 
 .lp-hero__globe-wrap {
   position: absolute;
-  top: 47%;
-  left: 50%;
-  width: var(--globe);
-  height: var(--globe);
-  margin: calc(var(--globe) / -2) 0 0 calc(var(--globe) / -2);
+  top: var(--cy);
+  left: var(--cx);
+  width: var(--Dbox);
+  height: var(--Dbox);
+  margin: calc(var(--Dbox) / -2) 0 0 calc(var(--Dbox) / -2);
 }
 
 .lp-hero__globe {
@@ -250,8 +260,8 @@
 /* ── Glowing ring (split: back half before the globe, front after logo) ── */
 .lp-ring {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: var(--cy);
+  left: var(--cx);
   width: var(--ring);
   height: var(--ring);
   margin: calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);
@@ -290,89 +300,84 @@
   position: absolute;
 }
 
-/* ── Copy ────────────────────────────────────────────────────────── */
-/* No z-index here: it would isolate the screen-blended logo (DOM order
-   already paints the copy above the globe and art). */
-.lp-hero__copy {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(64px, 9svh, 96px) 16px clamp(20px, 4svh, 48px);
-  text-align: center;
-}
-
-.lp-kicker {
-  color: var(--ice);
-  font-size: clamp(18px, 2.7svh, 26px);
-  letter-spacing: 6px;
-}
-
-/* Logo stage: centre of the globe and the ring. Its box is the visible
-   wordmark band (the logo's negative margins overflow it), so 50% / 50%
-   is the wordmark centre. No z-index / transform / opacity here: the logo
-   and ring blend through it. */
-.lp-logo-stage {
-  --ring: calc(var(--logo-w) * 1.2);
-  position: relative;
-  width: var(--logo-w);
-  margin-top: clamp(30px, 4.5svh, 48px);
-}
-
-.lp-logo-stage > .lp-kicker {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 6px);
-  left: 0;
-}
-
-.lp-logo-stage .lp-hero__globe-wrap {
-  top: 50%;
-}
-
+/* ── Centre composition ───────────────────────────────────────────── */
 /* Dark halo behind the screen-blended logo so it keeps contrast over the
-   globe lines and the art (screen can only lighten). */
-.lp-logo-stage::before {
+   globe lines (screen can only lighten). */
+.lp-halo {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: var(--cy);
+  left: var(--cx);
   width: calc(var(--logo-w) * 1.08);
   height: calc(var(--logo-w) * 0.44);
   margin: calc(var(--logo-w) * -0.22) 0 0 calc(var(--logo-w) * -0.54);
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(6, 12, 60, 0.85), rgba(6, 12, 60, 0));
-  content: "";
   pointer-events: none;
 }
 
-/* The 2:1 logo image has empty bands above (~28% of its height) and below
-   (~32%) the wordmark; negative margins pull the neighbours in. */
+/* The 2:1 logo image has empty bands above (~29% of its height) and below
+   (~35%) the wordmark; the margin puts the wordmark's centre on the origin. */
 .lp-hero__logo {
-  position: relative;
+  position: absolute;
+  top: var(--cy);
+  left: var(--cx);
   width: var(--logo-w);
-  margin: calc(var(--logo-w) * -0.13) 0 calc(var(--logo-w) * -0.15);
+  margin: calc(var(--logo-w) * -0.235) 0 0 calc(var(--logo-w) / -2);
 }
 
-.lp-kicker,
-.lp-cta {
-  position: relative;
+/* A fixed gap above the wordmark (the rhythm is kicker, logo, button). */
+.lp-kicker {
+  position: absolute;
+  top: calc(var(--cy) - var(--wm-half) - var(--gap) - var(--kh));
+  right: 0;
+  left: 0;
+  height: var(--kh);
+  color: var(--ice);
+  font-size: clamp(18px, 2.7svh, 26px);
+  letter-spacing: 6px;
+  line-height: var(--kh);
+  text-align: center;
 }
 
+/* Launch: the focal action. Wide gel pill, soft cobalt glow behind it
+   (a blurred layer that only pulses opacity / scale, so it is cheap). */
 .lp-cta {
+  position: absolute;
+  top: calc(73% - var(--btn-h) / 2);
+  right: 0;
+  left: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   justify-content: center;
-  gap: 16px 28px;
-  margin-top: var(--gap);
+}
+
+.lp-cta::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--btn-w) + 40px);
+  height: calc(var(--btn-h) + 34px);
+  margin: calc((var(--btn-h) + 34px) / -2) 0 0 calc((var(--btn-w) + 40px) / -2);
+  border-radius: var(--radius-pill);
+  background: rgba(79, 109, 255, 0.85);
+  filter: blur(22px);
+  opacity: 0.6;
+  content: "";
+  animation: lp-glow 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lp-glow {
+  50% {
+    opacity: 0.95;
+    transform: scale(1.07);
+  }
 }
 
 .lp-launch {
-  min-height: clamp(50px, 7svh, 66px);
-  padding: 0 clamp(24px, 3svh, 36px);
-  font-size: clamp(15px, 2.1svh, 19px);
+  width: var(--btn-w);
+  min-height: var(--btn-h);
+  padding: 0 24px;
+  font-size: calc(var(--btn-h) * 0.3);
 }
 
 /* ── Priority-based simplification (desktop / laptop) ──────────────
@@ -395,14 +400,8 @@
 /* Phones: the logo and launch button own the screen; art shrinks or hides */
 @media (max-width: 760px) {
   .lp-hero {
-    --globe: min(96vw, 70svh);
+    --D: min(96vw, 70svh);
     --logo-w: 94vw;
-    height: auto;
-    min-height: 100svh;
-  }
-
-  .lp-hero__stage {
-    position: absolute;
   }
 
   /* the centre column spans the phone width: no room for side decor */
@@ -413,8 +412,7 @@
   }
 
   .lp-cta {
-    flex-direction: column;
-    gap: 18px;
+    top: calc(70% - var(--btn-h) / 2);
   }
 
   .lp-art--bust {
@@ -430,12 +428,6 @@
     width: 62vw;
   }
 
-  .lp-hero__copy {
-    position: relative;
-    min-height: 100svh;
-    padding: 110px 16px 64px;
-    padding-bottom: 28svh;
-  }
 }
 
 /* ── Section headings ────────────────────────────────────────────── */
@@ -1033,3 +1025,9 @@
   }
 }
 
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-cta::before {
+    animation: none;
+  }
+}
