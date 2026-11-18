@@ -97,7 +97,14 @@
   --bust-w: min(35vw, 61svh);               /* 35vw, and <= 82svh tall (x1.327) */
   --cx: 50%;
   --cy: calc(50% - 1.5svh);
-  --ring: calc(var(--logo-w) * 1.2);
+  /* Ring: sized and placed from the globe, not the logo. Major axis 1.36x the
+     globe (both tips sweep past its silhouette), clamped to 96vw so a narrow
+     viewport never clips it; minor axis 0.30x the major; centre 4% of the
+     globe diameter below the globe centre. The SVG box is major / 0.8667. */
+  --ring-major: min(calc(var(--D) * 1.36), 96vw);
+  --ring: calc(var(--ring-major) / 0.8667);
+  --ring-top: calc(var(--cy) + var(--D) * 0.04);
+  --ring-left: var(--cx);
   --wm-half: calc(var(--logo-w) * 0.1);     /* half the wordmark's height */
   --gap: clamp(28px, 4svh, 48px);           /* kicker -> wordmark */
   --kh: clamp(22px, 3svh, 30px);            /* kicker line height */
@@ -214,8 +221,8 @@
 
 /* Liquid chrome blob: left side zone, bottom */
 .lp-art--blob {
-  bottom: 2svh;
-  left: -4vw;
+  bottom: -3svh;
+  left: -5vw;
   width: min(28.8vw, 48svh, 552px);
 }
 
@@ -266,8 +273,8 @@
 /* ── Glowing ring (split: back half before the globe, front after logo) ── */
 .lp-ring {
   position: absolute;
-  top: var(--cy);
-  left: var(--cx);
+  top: var(--ring-top, 50%);
+  left: var(--ring-left, 50%);
   width: var(--ring);
   height: var(--ring);
   margin: calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);
@@ -278,7 +285,7 @@
 .lp-ring__tilt {
   position: absolute;
   inset: 0;
-  transform: rotate(-14deg);
+  transform: rotate(-15deg);
   will-change: transform;
 }
 
@@ -347,9 +354,12 @@
 
 /* Launch: the focal action. Wide gel pill, soft cobalt glow behind it
    (a blurred layer that only pulses opacity / scale, so it is cheap). */
+/* The front arc's lowest point under the button (over the precession range)
+   is cy + 0.316 D, so the button starts 24px below that and the ring never
+   touches it. */
 .lp-cta {
   position: absolute;
-  top: calc(73% - var(--btn-h) / 2);
+  top: calc(var(--cy) + var(--D) * 0.318 + 24px);
   right: 0;
   left: 0;
   display: flex;
@@ -976,7 +986,7 @@
 
 .lp-final__text {
   position: relative;
-  max-width: 34ch;
+  max-width: 48ch;
   color: var(--ice);
   font-size: 26px;
   text-shadow: 0 0 6px var(--abyss), 2px 2px 0 var(--abyss);

@@ -100,6 +100,59 @@
   for (const [k, r] of Object.entries(deco)) if (k.startsWith('spark') && hit(r, bust)) problems.push(`${k} overlaps bust`)
   m.visible = Object.keys(deco).filter((k) => !k.startsWith('spark')).join(',')
 
+  // glowing ring: sample the rendered core line of both halves in screen
+  // space (this includes the precession transform at the moment of the check)
+  const ringPts = (side) => {
+    const p = q(`.lp-hero .lp-ring--${side} .lp-ring__line`)
+    const len = p.getTotalLength(), ctm = p.getScreenCTM(), out = []
+    for (let i = 0; i <= 160; i++) { const pt = p.getPointAtLength((len * i) / 160).matrixTransform(ctm); out.push([pt.x, pt.y]) }
+    return out
+  }
+  const back = ringPts('back'), front = ringPts('front'), ring = back.concat(front)
+  const rxs = ring.map((p) => p[0])
+  const rw = Math.max(...rxs) - Math.min(...rxs)
+  const rcx = ring.reduce((a, p) => a + p[0], 0) / ring.length, rcy = ring.reduce((a, p) => a + p[1], 0) / ring.length
+  const rect2 = (x, y, r) => Math.hypot(Math.max(0, r.l - x, x - r.r), Math.max(0, r.t - y, y - r.b))
+  const minDist = (pts, r) => Math.min(...pts.map(([x, y]) => rect2(x, y, r)))
+  // ring centre vs globe centre (within 6% of the globe diameter)
+  if (Math.hypot(rcx - gx, rcy - gy) > 0.06 * gd) problems.push(`(ring) centre ${Math.round(Math.hypot(rcx - gx, rcy - gy))}px from the globe centre (> 6%)`)
+  // width 1.25x..1.5x the globe, unless the viewport clamps it (then both tips must still be visible)
+  const wLo = Math.min(1.25 * gd, 0.9 * W), wHi = 1.5 * gd
+  if (rw < wLo || rw > wHi) problems.push(`(ring) width ${Math.round(rw)}px = ${(rw / gd).toFixed(2)}x the globe (want 1.25-1.5x${W < 760 ? ', clamped on phones' : ''})`)
+  if (Math.min(...rxs) < 0 || Math.max(...rxs) > W) problems.push('(ring) a tip leaves the viewport')
+  if (Math.max(...ring.map((p) => p[1])) > H || Math.min(...ring.map((p) => p[1])) < 0) problems.push('(ring) leaves the viewport vertically')
+  // front arc vs launch button, plus the other pieces
+  const dBtn = minDist(front, btn)
+  if (dBtn < 20) problems.push(`(ring) front arc ${Math.round(dBtn)}px from the launch button (< 20)`)
+  const dNav = Math.min(minDist(ring, nav), minDist(ring, brand))
+  if (dNav < 8) problems.push(`(ring) ${Math.round(dNav)}px from the nav`)
+  let dBubble = null
+  if (vis(bustEl)) {
+    const bcx2 = (bubble.l + bubble.r) / 2, bcy2 = (bubble.t + bubble.b) / 2, br2 = (bubble.r - bubble.l) / 2
+    dBubble = Math.min(...ring.map(([x, y]) => Math.hypot(x - bcx2, y - bcy2) - br2))
+    if (dBubble < 12) problems.push(`(ring) ${Math.round(dBubble)}px from the bubble (< 12)`)
+  }
+  const near = {}
+  // the art has black margins that screen-blend away: shrink the image boxes to the visible figure
+  const trim = { window: [0.06, 0.06, 0.08, 0.1], blob: [0.02, 0.02, 0.12, 0.12], sticker: [0.1, 0.1, 0.15, 0.15] }
+  const visibleBox = (k, r) => { const t = trim[k]; if (!t) return r; const w = r.r - r.l, h = r.b - r.t; return { l: r.l + t[0] * w, r: r.r - t[1] * w, t: r.t + t[2] * h, b: r.b - t[3] * h } }
+  for (const [k, r0] of Object.entries(deco)) {
+    if (k.startsWith('spark')) continue
+    const r = visibleBox(k, r0)
+    near[k] = Math.round(minDist(ring, r))
+    if (k !== 'bust' && near[k] < 1) problems.push(`(ring) crosses the ${k}`)
+  }
+  // how much of the wordmark the front arc covers (band ~12px wide)
+  let inside = 0
+  for (let i = 1; i < front.length; i++) {
+    const [x0, y0] = front[i - 1], [x1, y1] = front[i]
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2
+    if (mx >= word.l && mx <= word.r && my >= word.t && my <= word.b) inside += Math.hypot(x1 - x0, y1 - y0)
+  }
+  const covered = (inside * 12) / ((word.r - word.l) * (word.b - word.t))
+  if (covered > 0.15) problems.push(`(ring) front arc covers ${Math.round(covered * 100)}% of the wordmark (> 15%)`)
+  m.ring = `${Math.round(rw)}px = ${(rw / gd).toFixed(2)}x globe, centre ${Math.round(rcx - gx)},${Math.round(rcy - gy)}px off, front arc ${Math.round(dBtn)}px from the button, ${dBubble === null ? 'n/a' : Math.round(dBubble) + 'px'} from the bubble, covers ${Math.round(covered * 100)}% of the letters, near: ${JSON.stringify(near)}`
+
   // removed things stay removed
   for (const sel of ['.lp-tagline', '.lp-link', '.lp-note', '.lp-chip']) if (q('.lp-hero ' + sel)) problems.push(`${sel} still in the hero`)
 

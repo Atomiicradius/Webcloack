@@ -31,7 +31,7 @@ export default function GlowRingHalf({ side, className = '' }) {
   // Brightest in the middle of each arc, fading toward the ends like a
   // streak of light; the back half is dimmer for depth.
   const peak = side === 'back' ? 0.7 : 1
-const edge = 0.38 // ends stay lit so the two halves read as one ring
+const edge = 0.1 // the tips fade out (a streak of light), faintly lit so the halves still meet
 
   return (
     <div className={`lp-ring lp-ring--${side} ${className}`} aria-hidden="true">
@@ -62,13 +62,13 @@ const edge = 0.38 // ends stay lit so the two halves read as one ring
           </defs>
           <g fill="none" strokeLinecap="round">
             {/* wide cobalt */}
-            <path d={d} stroke={`url(#${id}-glow)`} strokeWidth="34" opacity="0.85" filter={`url(#${id}-wide)`} />
+            <path d={d} stroke={`url(#${id}-glow)`} strokeWidth="42" opacity="0.95" filter={`url(#${id}-wide)`} />
             {/* medium ice */}
-            <path d={d} stroke={`url(#${id}-core)`} strokeWidth="12" opacity="0.85" filter={`url(#${id}-mid)`} />
+            <path d={d} stroke={`url(#${id}-core)`} strokeWidth="15" opacity="0.95" filter={`url(#${id}-mid)`} />
             {/* tight white */}
-            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="5" opacity="1" filter={`url(#${id}-tight)`} />
+            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="6" opacity="1" filter={`url(#${id}-tight)`} />
             {/* core line */}
-            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="3" />
+            <path className="lp-ring__line" pathLength="1" d={d} stroke={`url(#${id}-core)`} strokeWidth="3.4" />
           </g>
         </svg>
 

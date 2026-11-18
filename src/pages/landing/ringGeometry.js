@@ -1,9 +1,12 @@
 /**
  * ringGeometry.js — Shared geometry for the split glowing ring.
- * Ellipse in a centred square viewBox (-half..half).
+ * Ellipse in a centred square viewBox (-half..half): the major axis is
+ * 2 * rx = 1040 of 1200 (0.8667 of the box) and the minor axis is 0.30 of
+ * the major (ry / rx), per the hero ring spec. The CSS sizes the box so the
+ * major axis is ~1.36x the globe diameter.
  */
 
-export const RING = { rx: 520, ry: 158, half: 600 }
+export const RING = { rx: 520, ry: 156, half: 600 }
 export const RING_BEADS = [
   { kind: 'bead', r: 5, speed: 11, offset: 0.05 },
   { kind: 'bead', r: 4, speed: 14, offset: 0.38 },

@@ -148,12 +148,13 @@ export default function Landing() {
             { scaleX: 0.002, duration: 14, ease: 'sine.in', yoyo: true, repeat: -1, transformOrigin: '50% 50%' },
           ).totalTime(i * (28 / 6))
         })
-        // Glowing rings (hero + final CTA): precess the tilt of both halves in
+        // Glowing rings (hero + final CTA): precess the tilt (+/- 3deg) of both halves in
         // sync, a light streak travels each arc, beads ride the full loop
         const ringRaw = MotionPathPlugin.cacheRawPathMeasurements(MotionPathPlugin.getRawPath(RING_PATH))
         const animateRing = (scope, delay) => {
-          gsap.to(`${scope} .lp-ring__tilt`, {
-            rotation: -5, scaleY: 1.14, duration: 7.5, ease: 'sine.inOut', yoyo: true, repeat: -1,
+          // precession: -15deg +/- 3deg (CSS holds the static -15deg)
+          gsap.fromTo(`${scope} .lp-ring__tilt`, { rotation: -18 }, {
+            rotation: -12, duration: 7.5, ease: 'sine.inOut', yoyo: true, repeat: -1,
           })
           gsap.utils.toArray(`${scope} .lp-ring__shine-path`).forEach((path, i) => {
             gsap.fromTo(path, { strokeDashoffset: 70 }, {
