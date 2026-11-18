@@ -80,8 +80,8 @@
 /* GSAP owns transform (and resets the individual translate / rotate /
    scale properties) on animated elements, so static offsets here use
    margins and static tilts live on non-animated inner wrappers. */
-/* Composition: a protected centre column (kicker, logo, tagline, CTA,
-   microcopy) sized by width AND height, and two outer side zones (~22vw
+/* Composition: a protected centre column (kicker, logo, CTA)
+   sized by width AND height, and two outer side zones (~22vw
    each) that hold every decoration. Decorations may bleed off-screen but
    never enter the centre column; on cramped viewports they drop out in
    priority order (see the media queries below). */
@@ -348,7 +348,7 @@
 }
 
 /* The 2:1 logo image has empty bands above (~28% of its height) and below
-   (~32%) the wordmark; negative margins pull the kicker and tagline in. */
+   (~32%) the wordmark; negative margins pull the neighbours in. */
 .lp-hero__logo {
   position: relative;
   width: var(--logo-w);
@@ -356,31 +356,8 @@
 }
 
 .lp-kicker,
-.lp-tagline,
-.lp-cta,
-.lp-note {
+.lp-cta {
   position: relative;
-}
-
-/* Clear of the ring: its lowest point (front arc, at full precession
-   stretch) sits ~0.07 logo-widths below the wordmark band. */
-.lp-tagline {
-  margin-top: max(var(--gap), calc(var(--logo-w) * 0.085));
-  font-size: clamp(24px, min(3vw, 4.6svh), 46px);
-  line-height: 1.05;
-  text-shadow: 2px 2px 0 var(--abyss);
-  isolation: isolate; /* keeps the backdrop below the text, above the hero */
-}
-
-/* Soft dark backdrop so the tagline stays legible over the globe and ring */
-.lp-tagline::before {
-  position: absolute;
-  inset: -40% -14%;
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(6, 12, 60, 0.7), rgba(6, 12, 60, 0));
-  content: "";
-  pointer-events: none;
 }
 
 .lp-cta {
@@ -398,55 +375,12 @@
   font-size: clamp(15px, 2.1svh, 19px);
 }
 
-.lp-link {
-  font-size: clamp(20px, 2.8svh, 26px);
-  text-shadow: 2px 2px 0 var(--abyss);
-}
-
-.lp-note {
-  margin-top: var(--gap);
-  color: var(--ice);
-  font-size: clamp(18px, 2.4svh, 22px);
-  text-shadow: 2px 2px 0 var(--abyss);
-}
-
-.lp-chips {
-  position: absolute;
-  inset: 0;
-  list-style: none;
-  pointer-events: none;
-}
-
-.lp-chip {
-  position: absolute;
-  padding: 4px 16px;
-  border: 2px solid var(--ice);
-  border-radius: var(--radius-pill);
-  background: rgba(6, 12, 60, 0.75);
-  box-shadow: var(--shadow-hard);
-  font-size: clamp(18px, 2.6svh, 24px);
-  white-space: nowrap;
-}
-
-.lp-chip--a { top: 52svh; left: 3vw; }
-.lp-chip--b { top: clamp(70px, 11svh, 120px); right: 5vw; background: var(--white); color: #0A1CA8; border-color: var(--white); }
-.lp-chip--c { top: 62svh; left: 5vw; }
-
 /* ── Priority-based simplification (desktop / laptop) ──────────────
    As the viewport gets cramped (narrower OR shorter), remove in order:
-   1 sticker, 2 "0 uploads", 3 "4 hands", 4 shrink window + blob,
-   5 reduce the bust. The centre column never changes. Phones (<=760px)
+   1 sticker, 2 shrink window + blob, 3 reduce the bust. The centre column never changes. Phones (<=760px)
    have their own layout below. */
 @media (max-width: 1380px), (max-height: 800px) {
   .lp-art--sticker { display: none; }
-}
-
-@media (max-width: 1300px), (max-height: 760px) {
-  .lp-chip--c { display: none; }
-}
-
-@media (max-width: 1200px), (max-height: 700px) {
-  .lp-chip--a { display: none; }
 }
 
 @media (max-width: 1100px), (max-height: 650px) {
@@ -474,7 +408,6 @@
   /* the centre column spans the phone width: no room for side decor */
   .lp-art--window,
   .lp-art--sticker,
-  .lp-chips,
   .lp-sparks {
     display: none;
   }
@@ -502,10 +435,6 @@
     min-height: 100svh;
     padding: 110px 16px 64px;
     padding-bottom: 28svh;
-  }
-
-  .lp-tagline {
-    font-size: 30px;
   }
 }
 

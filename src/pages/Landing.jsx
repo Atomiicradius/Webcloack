@@ -22,9 +22,7 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ScrollSmoother } from 'gsap/ScrollSmoother'
-import { SplitText } from 'gsap/SplitText'
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
-import { FILTERS } from '../engine/filters.js'
 import { loadCameraApp } from '../routes.js'
 import {
   ChromeLogo, GridFloor, Sparkle, Ticker, WireGlobe,
@@ -37,7 +35,7 @@ import HowItWorks from './landing/HowItWorks.jsx'
 import FilterShowcase from './landing/FilterShowcase.jsx'
 import './landing.css'
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollSmoother, SplitText, MotionPathPlugin)
+gsap.registerPlugin(useGSAP, ScrollTrigger, ScrollSmoother, MotionPathPlugin)
 
 const REPO_URL = 'https://github.com/Atomiicradius/Webcloack'
 
@@ -142,19 +140,7 @@ export default function Landing() {
           .from('.lp-hero .lp-ring', { opacity: 0, scale: 0.8, duration: 1.1, ease: 'power2.out' }, '<')
           .fromTo('.lp-hero .lp-ring--back .lp-ring__line', { strokeDasharray: '0 1' }, { strokeDasharray: '1 0', duration: 0.7, ease: 'power2.in' }, '<')
           .fromTo('.lp-hero .lp-ring--front .lp-ring__line', { strokeDasharray: '0 1' }, { strokeDasharray: '1 0', duration: 0.7, ease: 'power2.out' }, '>')
-          .from('.lp-cta > *, .lp-note', { opacity: 0, y: 18, stagger: 0.08, duration: 0.45 }, 1.5)
-          .from('.lp-chip', { opacity: 0, scale: 0, stagger: 0.08, duration: 0.5, ease: 'back.out(2.2)' }, '<')
-
-        // Tagline revealed line by line (re-splits after fonts / resize)
-        SplitText.create('.lp-tagline', {
-          type: 'lines',
-          mask: 'lines',
-          autoSplit: true,
-          onSplit: (self) => gsap.from(self.lines, {
-            yPercent: 110, opacity: 0, duration: 0.6, stagger: 0.14, ease: 'power3.out',
-            delay: intro.time() < 1.2 ? 1.25 - intro.time() : 0,
-          }),
-        })
+          .from('.lp-cta > *', { opacity: 0, y: 18, duration: 0.45, clearProps: 'transform,opacity' }, 1.5)
 
         // ── Idle loops ───────────────────────────────────────────
         // Globe: each meridian squeezes like a rotating sphere (|cos|)
@@ -346,7 +332,7 @@ export default function Landing() {
     tl.to(e.currentTarget, { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1, ease: 'power1.inOut' })
     if (heroVisible) {
       // (never fade the logo stage itself: opacity there would isolate the blend)
-      tl.to('.lp-kicker, .lp-hero__logo, .lp-hero .lp-ring, .lp-tagline, .lp-cta, .lp-note, .lp-chip, .lp-nav', {
+      tl.to('.lp-kicker, .lp-hero__logo, .lp-hero .lp-ring, .lp-cta, .lp-nav', {
         opacity: 0, scale: 1.15, duration: 0.35, ease: 'power2.in',
       }, 0.05)
         .to('.lp-hero__globe', { scale: 7, duration: 0.8, ease: 'power3.in' }, 0.05)
@@ -405,9 +391,6 @@ export default function Landing() {
                 {/* last, so the ring glow never dims it */}
                 <p className="lp-kicker">introducing</p>
               </div>
-              <p className="lp-tagline">
-                your hands are<br />the invisibility cloak.
-              </p>
               <div className="lp-cta">
                 <button
                   type="button"
@@ -418,16 +401,13 @@ export default function Landing() {
                 >
                   <span aria-hidden="true">▶</span> launch cloak.exe
                 </button>
-                <a className="lp-link" href="#how-it-works">how it works ↓</a>
               </div>
-              <p className="lp-note">runs in your browser. nothing is uploaded.</p>
             </div>
 
             {/* Marble bust (faces left, toward the logo). Painted after the logo
                 stage so the globe's blue fill never tints the pink bubble;
-                screen blend lets the logo / ring still read through it. The
-                pill tags come next, so they sit in front. Backlight and a
-                faint halftone live inside the blended stack. */}
+                screen blend lets the logo / ring still read through it.
+                Backlight and a faint halftone live inside the blended stack. */}
             <div className="lp-art ch-screen lp-art--bust" data-depth="0.7" aria-hidden="true">
               <span className="lp-art__tilt lp-art__img lp-bust">
                 <img className="lp-bust__img" src={ART.bust.src} width={ART.bust.w} height={ART.bust.h} alt="" decoding="async" draggable="false" />
@@ -436,11 +416,6 @@ export default function Landing() {
               </span>
             </div>
 
-            <ul className="lp-chips" aria-label="at a glance">
-              <li className="lp-chip lp-chip--a">4 hands</li>
-              <li className="lp-chip lp-chip--b">{FILTERS.length} filters</li>
-              <li className="lp-chip lp-chip--c">0 uploads</li>
-            </ul>
           </div>
         </section>
 
@@ -457,7 +432,7 @@ export default function Landing() {
             <h2 id="lp-final-title" className="lp-final__title">ready? hands up.</h2>
             <GlowRingHalf side="front" />
           </div>
-          <p className="lp-final__text">the camera only turns on after you press launch. you can stop it any time.</p>
+          <p className="lp-final__text">runs in your browser. nothing is uploaded. the camera only turns on after you press launch, and you can stop it any time.</p>
           <button
             type="button"
             className="ch-pill lp-launch"
